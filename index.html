@@ -6,26 +6,24 @@
 <title>Job Work Dashboard Manager — MVP</title>
 <style>
   :root{
-    --bg:#0b0d12; --panel:#12151c; --card:#171a23; --fg:#e9edf5; --muted:#9aa0aa;
-    --acc:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#dc2626; --border:#232838;
-    --impact:#2563eb; --important:#16a34a; --urgent:#dc2626;
-    --shadow:0 12px 36px rgba(0,0,0,.35);
+    --bg:#0b0d12; --panel:#12151c; --card:#171a23; --fg:#0b0d12; --muted:#667084;
+    --acc:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#dc2626; --border:#e6e8ef;
+    --impact:#1d4ed8; --important:#15803d; --urgent:#b91c1c;
+    --shadow:0 10px 26px rgba(0,0,0,.07);
     --radius:16px; --gap:12px; --pad:14px; --tap:38px; --maxw:1100px;
+    background:#f6f7fb; color-scheme:light dark;
   }
-  @media (prefers-color-scheme: light){
-    :root{
-      --bg:#f6f7fb; --panel:#fff; --card:#fff; --fg:#0b0d12; --muted:#667084;
-      --acc:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#dc2626; --border:#e6e8ef;
-      --impact:#1d4ed8; --important:#15803d; --urgent:#b91c1c;
-      --shadow:0 10px 26px rgba(0,0,0,.07);
-    }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0b0d12; --panel:#12151c; --card:#171a23; --fg:#e9edf5; --muted:#9aa0aa; --border:#232838; --shadow:0 12px 36px rgba(0,0,0,.35); }
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--fg);
-    font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+    font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+
   a{color:var(--acc);text-decoration:none}
   button{cursor:pointer}
+  .link{cursor:pointer; text-decoration:underline; text-underline-offset:2px; color:var(--acc)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:clamp(8px,2vw,14px)}
   header{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.2) blur(6px);
     background:color-mix(in oklab,var(--bg) 82%,transparent);border-bottom:1px solid var(--border)}
@@ -49,7 +47,7 @@
   select,input[type="text"],input[type="date"],textarea{
     width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--fg)}
   label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--border);font-size:12px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:var(--card);border:1px solid var(--border);font-size:12px}
   .pill .dot{width:8px;height:8px;border-radius:999px;background:currentColor}
   .badge{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel)}
   .status-todo{background:transparent}.status-in-progress{background:color-mix(in oklab,var(--acc) 10%,transparent)}
@@ -58,33 +56,25 @@
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
   .action{background:var(--acc)!important;color:#fff!important;border-color:transparent!important}
 
-  /* Compact desktop todo rows with inline quick edit */
-  .list-todos{display:grid;gap:8px;margin-top:12px}
+  /* Ultra-compact Todos rows */
+  .list-todos{display:grid;gap:6px;margin-top:10px}
   .todoRow{
-    border:1px solid var(--border);background:var(--card);border-radius:10px;padding:6px 8px;
-    display:grid;gap:8px;align-items:center;
-    grid-template-columns:minmax(110px,140px) 1fr minmax(140px,180px) minmax(130px,170px) 70px 84px;
+    border:1px solid var(--border);background:var(--card);border-radius:10px;padding:4px 6px;
+    display:grid;gap:6px;align-items:center;
+    grid-template-columns: 98px 1fr 90px 110px 40px;
   }
-  .todoRow .title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
-  .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
-  .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:6px}
+  .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:4px}
+  .todoRow .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
   .todoRow .actions{display:flex;gap:6px;justify-content:flex-end}
-  .todoRow .pill,.todoRow .badge{padding:2px 8px;font-size:12px}
-  @media (max-width:1000px){
-    .todoRow{grid-template-columns:1fr;align-items:start}
-    .todoRow .actions{justify-content:flex-start}
-  }
+  @media (max-width:900px){ .todoRow{grid-template-columns:1fr} .todoRow .actions{justify-content:flex-start} }
 
-  /* Eisenhower HIU switches */
-  .switch3{display:inline-flex;gap:6px;align-items:center}
-  .sw{
-    width:28px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--panel);
-    display:grid;place-items:center;font:700 11px/1 system-ui;color:var(--muted);
-  }
-  .sw.h.on{background:var(--impact);color:#fff;border-color:transparent}
-  .sw.i.on{background:var(--important);color:#fff;border-color:transparent}
-  .sw.u.on{background:var(--urgent);color:#fff;border-color:transparent}
+  /* Graphical HIU strip (3 tiny squares) */
+  .hiu{display:inline-grid;grid-auto-flow:column;gap:4px;align-items:center}
+  .hiu .d{width:14px;height:14px;border-radius:3px;border:1px solid var(--border);
+    background:var(--panel);display:block}
+  .hiu .d.h.on{background:var(--impact);border-color:transparent}
+  .hiu .d.i.on{background:var(--important);border-color:transparent}
+  .hiu .d.u.on{background:var(--urgent);border-color:transparent}
 
   .list{display:grid;gap:10px;margin-top:12px}
   .card{border:1px solid var(--border);background:var(--card);border-radius:14px;padding:12px;display:grid;gap:6px}
@@ -203,11 +193,10 @@
     </div>
     <div>
       <label>Eisenhower (H/I/U)</label>
-      <div class="switch3" id="eisenForm">
-        <button type="button" class="sw h" data-k="impact" title="High impact (4)">H</button>
-        <button type="button" class="sw i" data-k="important" title="Important (2)">I</button>
-        <button type="button" class="sw u" data-k="urgent" title="Urgent (1)">U</button>
-        <span class="badge" id="eisenScore">P:0</span>
+      <div class="hiu" id="eisenForm">
+        <span class="d h" data-k="impact" title="High impact"></span>
+        <span class="d i" data-k="important" title="Important"></span>
+        <span class="d u" data-k="urgent" title="Urgent"></span>
       </div>
     </div>
     <div><label>Tags (comma separated)</label><input type="text" id="tTags" placeholder="design, api, review"></div>
@@ -224,37 +213,17 @@
   </form>
 </dialog>
 
-<!-- MODAL: ADD PROJECT -->
-<dialog id="dlgProject">
-  <form method="dialog" class="modal" id="projectForm">
-    <h3>New Project</h3>
-    <div class="row">
-      <div><label>Name</label><input type="text" id="pName" required></div>
-      <div><label>Color</label><input type="color" id="pColor" value="#7cc9ff"></div>
-    </div>
-    <div class="toolbar" style="justify-content:flex-end">
-      <button value="cancel" class="pill">Cancel</button>
-      <button id="btnSaveProject" value="default" class="pill action">Save</button>
-    </div>
-  </form>
-</dialog>
+<!-- MODALS: Project, Person, Attach (unchanged structure, smaller tweaks only) -->
+<dialog id="dlgProject"><form method="dialog" class="modal" id="projectForm"><h3>New Project</h3>
+  <div class="row"><div><label>Name</label><input type="text" id="pName" required></div><div><label>Color</label><input type="color" id="pColor" value="#7cc9ff"></div></div>
+  <div class="toolbar" style="justify-content:flex-end"><button value="cancel" class="pill">Cancel</button><button id="btnSaveProject" value="default" class="pill action">Save</button></div>
+</form></dialog>
 
-<!-- MODAL: ADD PERSON -->
-<dialog id="dlgPerson">
-  <form method="dialog" class="modal" id="personForm">
-    <h3>New Person</h3>
-    <div class="row">
-      <div><label>Name</label><input type="text" id="sName" required></div>
-      <div><label>Initials</label><input type="text" id="sInit" placeholder="AB" maxlength="3"></div>
-    </div>
-    <div class="toolbar" style="justify-content:flex-end">
-      <button value="cancel" class="pill">Cancel</button>
-      <button id="btnSavePerson" value="default" class="pill action">Save</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgPerson"><form method="dialog" class="modal" id="personForm"><h3>New Person</h3>
+  <div class="row"><div><label>Name</label><input type="text" id="sName" required></div><div><label>Initials</label><input type="text" id="sInit" placeholder="AB" maxlength="3"></div></div>
+  <div class="toolbar" style="justify-content:flex-end"><button value="cancel" class="pill">Cancel</button><button id="btnSavePerson" value="default" class="pill action">Save</button></div>
+</form></dialog>
 
-<!-- MODAL: ATTACH EXISTING TASKS -->
 <dialog id="dlgAttach">
   <form method="dialog" class="modal" id="attachForm">
     <h3 id="attachTitle">Attach tasks</h3>
@@ -275,10 +244,7 @@
       <span class="note" id="aCount"></span>
     </div>
     <div class="list-todos" id="attachList"></div>
-    <div class="toolbar" style="justify-content:flex-end">
-      <button value="cancel" class="pill">Cancel</button>
-      <button id="btnAttachConfirm" value="default" class="pill action">Attach</button>
-    </div>
+    <div class="toolbar" style="justify-content:flex-end"><button value="cancel" class="pill">Cancel</button><button id="btnAttachConfirm" value="default" class="pill action">Attach</button></div>
   </form>
 </dialog>
 
@@ -289,11 +255,11 @@ const demoData=()=>({
   meta:{version:2,lastId:100},
   current:{tab:'todos',sort:'due-asc',activeKanbanId:'kb1'},
   todos:{
-    1:{id:'1',title:'Finalize wireframes',notes:'Homepage + pricing',projectId:'p1',people:[],tags:['design'],priority:'H',due:dateStrOffset(2),created:Date.now()-86400000*2,status:'in-progress'},
-    2:{id:'2',title:'API auth flow',notes:'Add refresh tokens',projectId:'p1',people:['a'],tags:['api','security'],priority:'M',due:dateStrOffset(5),created:Date.now()-86400000*3,status:'todo'},
-    3:{id:'3',title:'Client feedback pass',notes:'Summarize and triage',projectId:'p2',people:['b'],tags:['pm'],priority:'M',due:dateStrOffset(1),created:Date.now()-86400000,status:'review'},
-    4:{id:'4',title:'Billing bugfix',notes:'Rounding issue',projectId:'p1',people:['c'],tags:['bug'],priority:'H',due:dateStrOffset(0),created:Date.now()-3600*1000,status:'in-progress'},
-    5:{id:'5',title:'Write release notes',notes:'',projectId:'p2',people:[],tags:['docs'],priority:'L',due:'',created:Date.now(),status:'todo'}
+    1:{id:'1',title:'Finalize wireframes',notes:'Homepage + pricing',projectId:'p1',people:[],tags:['design'],due:dateStrOffset(2),created:Date.now()-86400000*2,status:'in-progress',eisen:{impact:1,important:1,urgent:0}},
+    2:{id:'2',title:'API auth flow',notes:'Add refresh tokens',projectId:'p1',people:['a'],tags:['api','security'],due:dateStrOffset(5),created:Date.now()-86400000*3,status:'todo',eisen:{impact:1,important:0,urgent:1}},
+    3:{id:'3',title:'Client feedback pass',notes:'Summarize and triage',projectId:'p2',people:['b'],tags:['pm'],due:dateStrOffset(1),created:Date.now()-86400000,status:'review',eisen:{impact:1,important:1,urgent:1}},
+    4:{id:'4',title:'Billing bugfix',notes:'Rounding issue',projectId:'p1',people:['c'],tags:['bug'],due:dateStrOffset(0),created:Date.now()-3600*1000,status:'in-progress',eisen:{impact:1,important:0,urgent:1}},
+    5:{id:'5',title:'Write release notes',notes:'',projectId:'p2',people:[],tags:['docs'],due:'',created:Date.now(),status:'todo',eisen:{impact:1,important:0,urgent:0}}
   },
   projects:{ p1:{id:'p1',name:'LaunchPad',color:'#7cc9ff',todoIds:['1','2','4']}, p2:{id:'p2',name:'Client Alpha',color:'#ffd36b',todoIds:['3','5']} },
   people:{
@@ -311,12 +277,8 @@ const demoData=()=>({
   }
 });
 function dateStrOffset(days){const d=new Date(Date.now()+days*86400000);return d.toISOString().slice(0,10);}
-
-let store=load(); migrate();
-
-function load(){try{const raw=localStorage.getItem(LS_KEY);
-  if(!raw){const d=demoData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); return structuredClone(d);}
-  return JSON.parse(raw);}catch(e){console.error(e);const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}}
+let store=load();
+function load(){try{const raw=localStorage.getItem(LS_KEY);if(!raw){const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}return JSON.parse(raw);}catch(e){console.error(e);const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}}
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(store));}
 function nextId(){store.meta.lastId++;return String(store.meta.lastId);}
 
@@ -325,18 +287,7 @@ const el=(q,r=document)=>r.querySelector(q), els=(q,r=document)=>Array.from(r.qu
 function fmtDue(d){if(!d) return '—';const diff=(new Date(d)-new Date().setHours(0,0,0,0))/86400000;const days=Math.round(diff);
   if(days<0) return `⚠ ${Math.abs(days)}d overdue`; if(days===0) return 'Today'; if(days===1) return 'Tomorrow'; return `in ${days}d`; }
 const pColor=p=> '#'+(p.initials.charCodeAt(0)*99991 % 0xffffff).toString(16).padStart(6,'6f6f6f');
-function score(t){const e=t.eisen||{impact:0,important:0,urgent:0}; return (e.impact?4:0)+(e.important?2:0)+(e.urgent?1:0);}
-function migrate(){
-  // ensure eisen fields exist and derive from legacy priority if needed
-  Object.values(store.todos).forEach(t=>{
-    if(!t.eisen){
-      const m = t.priority || 'M';
-      if(m==='H') t.eisen={impact:1,important:1,urgent:1};
-      else if(m==='M') t.eisen={impact:1,important:1,urgent:0};
-      else t.eisen={impact:1,important:0,urgent:0};
-    }
-  });
-}
+const score=t=> (t.eisen?.impact?4:0)+(t.eisen?.important?2:0)+(t.eisen?.urgent?1:0);
 
 /*** NAV + IO ***/
 const tabs=el('#tabs');
@@ -355,7 +306,7 @@ el('#btnImport').onclick=()=>el('#fileImport').click();
 el('#fileImport').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return; const r=new FileReader();
   r.onload=()=>{try{const data=JSON.parse(r.result); if(!data.todos||!data.projects||!data.people) throw new Error('Invalid backup');
-    store=data; migrate(); save(); render(true);}catch(err){alert('Import failed: '+err.message);}};
+    store=data; save(); render(true);}catch(err){alert('Import failed: '+err.message);}};
   r.readAsText(f); e.target.value='';
 });
 
@@ -365,8 +316,14 @@ const fSearch=el('#fSearch'), fProject=el('#fProject'), fPerson=el('#fPerson'),
 [fSearch,fProject,fPerson,fStatus,fSort].forEach(c=>c.addEventListener('input',renderTodos));
 
 function renderTodos(){
-  fProject.innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  fPerson.innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  // preserve selections while repopulating options (this fixes your filters)
+  const curProj=fProject.value, curPerson=fPerson.value;
+  const projOpts = `<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const peopleOpts = `<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if(fProject.innerHTML!==projOpts) fProject.innerHTML = projOpts;
+  if(fPerson.innerHTML!==peopleOpts) fPerson.innerHTML = peopleOpts;
+  fProject.value = curProj; fPerson.value = curPerson;
+
   let items=Object.values(store.todos);
 
   // universal search
@@ -394,24 +351,22 @@ function renderTodos(){
   el('#countInfo').textContent=`${items.length} shown · ${Object.keys(store.todos).length} total`;
 
   todoList.innerHTML=items.map(t=>{
-    const p=store.projects[t.projectId]; const s=score(t);
+    const p=store.projects[t.projectId];
     const ei=t.eisen||{impact:0,important:0,urgent:0};
     return `<div class="todoRow" data-id="${t.id}">
       <select class="statusSel badge status-${t.status||'todo'}" data-act="setStatus" data-id="${t.id}">
         ${['todo','in-progress','review','done'].map(sv=>`<option value="${sv}" ${t.status===sv?'selected':''}>${sv}</option>`).join('')}
       </select>
-      <div class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit">${t.title}</div>
-      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
-      <div class="switch3" data-id="${t.id}">
-        <button class="sw h ${ei.impact?'on':''}" data-act="toggle" data-k="impact" title="High impact (4)">H</button>
-        <button class="sw i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important (2)">I</button>
-        <button class="sw u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent (1)">U</button>
+      <div class="title link" data-act="open" data-id="${t.id}" title="${t.notes? t.notes.replace(/"/g,'&quot;'):''}">${t.title}</div>
+      <div class="hiu" data-id="${t.id}">
+        <span class="d h ${ei.impact?'on':''}" data-act="toggle" data-k="impact" title="High impact"></span>
+        <span class="d i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
+        <span class="d u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
+      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
       <input type="date" class="badge" style="padding:4px 8px;border-radius:8px" value="${t.due||''}" data-act="setDue" data-id="${t.id}">
       <div class="actions">
-        <span class="badge" title="Priority score">P:${s}</span>
         <button class="iconbtn" data-act="edit" data-id="${t.id}" title="Open details">✏️</button>
-        <button class="iconbtn" data-act="quickDone" data-id="${t.id}" title="Toggle done">✅</button>
       </div>
     </div>`;
   }).join('');
@@ -424,27 +379,16 @@ function renderTodos(){
   };
   todoList.onclick=e=>{
     const id=e.target.dataset.id;
-    if(e.target.dataset.act==='edit') openTodoModal(id);
-    if(e.target.dataset.act==='quickDone'){const t=store.todos[id]; t.status=(t.status==='done'?'todo':'done'); save(); renderTodos();}
+    if(e.target.dataset.act==='edit' || e.target.dataset.act==='open') openTodoModal(id);
     if(e.target.dataset.act==='toggle'){
-      const k=e.target.dataset.k; const t=store.todos[e.target.closest('.switch3').dataset.id];
+      const k=e.target.dataset.k; const t=store.todos[e.target.closest('.hiu').dataset.id];
       t.eisen = t.eisen||{impact:0,important:0,urgent:0}; t.eisen[k]=t.eisen[k]?0:1;
       save(); renderTodos();
     }
   };
-  // contenteditable title
-  todoList.addEventListener('keydown', (e)=>{
-    if(e.target.dataset.act==='editTitle' && e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
-  });
-  todoList.addEventListener('blur', (e)=>{
-    if(e.target.dataset.act==='editTitle'){
-      const id=e.target.dataset.id; const v=e.target.textContent.trim();
-      store.todos[id].title=v||store.todos[id].title; save();
-    }
-  }, true);
 }
 
-/*** PROJECTS VIEW (inline) ***/
+/*** PROJECTS VIEW (inline + clickable) ***/
 const projectList=el('#projectList');
 el('#btnAddProject').onclick=()=>el('#dlgProject').showModal();
 el('#btnSaveProject').onclick=e=>{
@@ -452,12 +396,12 @@ el('#btnSaveProject').onclick=e=>{
   const name=el('#pName').value.trim(); if(!name) return;
   const color=el('#pColor').value||'#7cc9ff'; const id='p'+nextId();
   store.projects[id]={id,name,color,todoIds:[]}; save(); el('#dlgProject').close(); el('#projectForm').reset();
-  renderProjects(); refreshProjectSelects();
+  renderProjects(); renderTodos(); // refresh filters too
 };
 function renderProjects(){
   projectList.innerHTML=Object.values(store.projects).map(p=>{
     const todos=(p.todoIds||[]).map(id=>store.todos[id]).filter(Boolean);
-    const inline = todos.map((t,i)=>`<span class="item">(${score(t)}) ${t.title}</span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
+    const inline = todos.map((t,i)=>`<span class="item link" data-act="open" data-id="${t.id}">${t.title}</span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
     return `<div class="card">
       <div class="cardhead">
         <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> ${p.name}</div>
@@ -466,10 +410,13 @@ function renderProjects(){
       <div class="inline-list">${inline || '<span class="note">No todos yet.</span>'}</div>
     </div>`;
   }).join('');
-  projectList.onclick=e=>{ if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid); };
+  projectList.onclick=e=>{
+    if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid);
+    if(e.target.dataset.act==='open') openTodoModal(e.target.dataset.id);
+  };
 }
 
-/*** PEOPLE VIEW (quick remove + attach modal) ***/
+/*** PEOPLE VIEW (clickable titles + quick remove + attach modal) ***/
 const peopleList=el('#peopleList');
 el('#btnAddPerson').onclick=()=>el('#dlgPerson').showModal();
 el('#btnSavePerson').onclick=e=>{
@@ -478,7 +425,7 @@ el('#btnSavePerson').onclick=e=>{
   const initials=(el('#sInit').value.trim()||name.split(/\s+/).map(s=>s[0]).join('').slice(0,3)).toUpperCase();
   const id=initials.toLowerCase()+nextId();
   store.people[id]={id,name,initials,waitingForMe:[],waitingForThem:[]}; save(); el('#dlgPerson').close(); el('#personForm').reset();
-  renderPeople(); refreshPeopleSelects();
+  renderPeople(); renderTodos();
 };
 function recomputeTodoPeople(todoId){
   const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id);
@@ -489,7 +436,7 @@ function renderPeople(){
     const listHtml=(arr,side)=> (arr||[]).map(tid=>{
       const t=store.todos[tid]; if(!t) return '';
       return `<span class="pill" data-pid="${p.id}" data-side="${side}" data-tid="${tid}">
-        (${score(t)}) ${t.title}${t.due?` · ${fmtDue(t.due)}`:''}
+        <span class="link" data-act="open" data-id="${tid}">${t.title}</span>${t.due?` · ${fmtDue(t.due)}`:''}
         <button class="xbtn" title="Remove">×</button>
       </span>`;
     }).join('') || '<span class="note">—</span>';
@@ -498,23 +445,17 @@ function renderPeople(){
         <div class="cardtitle" title="${p.id}">
           <span class="pill" style="background:${pColor(p)};color:#000;border-color:transparent">${p.initials}</span> ${p.name}
         </div>
-        <div class="coltools">
-          <button class="iconbtn action" data-pid="${p.id}" data-act="addWithPerson" title="New todo for ${p.name}">＋</button>
-        </div>
+        <div class="coltools"><button class="iconbtn action" data-pid="${p.id}" data-act="addWithPerson" title="New todo for ${p.name}">＋</button></div>
       </div>
       <div class="row">
         <div>
           <div class="tiny muted">I’m waiting on them</div>
-          <div class="toolbar">
-            <button class="pill action" data-pid="${p.id}" data-side="waitingForMe" data-act="openAttach">Attach tasks</button>
-          </div>
+          <div class="toolbar"><button class="pill action" data-pid="${p.id}" data-side="waitingForMe" data-act="openAttach">Attach tasks</button></div>
           <div class="chips">${listHtml(p.waitingForMe,'waitingForMe')}</div>
         </div>
         <div>
           <div class="tiny muted">They’re waiting on me</div>
-          <div class="toolbar">
-            <button class="pill action" data-pid="${p.id}" data-side="waitingForThem" data-act="openAttach">Attach tasks</button>
-          </div>
+          <div class="toolbar"><button class="pill action" data-pid="${p.id}" data-side="waitingForThem" data-act="openAttach">Attach tasks</button></div>
           <div class="chips">${listHtml(p.waitingForThem,'waitingForThem')}</div>
         </div>
       </div>
@@ -525,6 +466,7 @@ function renderPeople(){
     const act=e.target.dataset.act;
     if(act==='addWithPerson'){ openTodoModal(null,null,e.target.dataset.pid); return; }
     if(act==='openAttach'){ openAttachModal({type:'person', personId:e.target.dataset.pid, side:e.target.dataset.side}); return; }
+    if(act==='open') openTodoModal(e.target.dataset.id);
     if(e.target.classList.contains('xbtn')){
       const wrap=e.target.closest('.pill'); const pid=wrap.dataset.pid, side=wrap.dataset.side, tid=wrap.dataset.tid;
       const p=store.people[pid]; p[side]=p[side].filter(id=>id!==tid); recomputeTodoPeople(tid); save(); renderPeople(); renderTodos(); renderKanban();
@@ -532,7 +474,7 @@ function renderPeople(){
   };
 }
 
-/*** KANBAN ***/
+/*** KANBAN (unchanged features + attach/new) ***/
 const kbSelect=el('#kbSelect'), kbProject=el('#kbProject'), kanbanGrid=el('#kanbanGrid');
 el('#btnAddBoard').onclick=()=>{
   const name=prompt('Board name?'); if(!name) return;
@@ -548,7 +490,7 @@ el('#btnAddBoard').onclick=()=>{
 kbSelect.onchange=()=>{store.current.activeKanbanId=kbSelect.value; save(); renderKanban();};
 kbProject.onchange=()=>renderKanban();
 
-let pendingPlacement=null; // {boardId,colId} used after creating a new todo from a column
+let pendingPlacement=null;
 
 function renderKanban(){
   const boards=Object.values(store.kanbans);
@@ -588,7 +530,7 @@ function kanbanCard(t){
   const p=store.projects[t.projectId];
   return `<div class="card" kb data-id="${t.id}">
     <div class="cardhead">
-      <div class="cardtitle tiny">(${score(t)}) ${t.title}</div>
+      <div class="cardtitle tiny">${t.title}</div>
       <button class="iconbtn" title="Edit" data-act="edit" data-id="${t.id}">✏️</button>
     </div>
     <div class="toolbar">
@@ -615,17 +557,14 @@ const dlgTodo=el('#dlgTodo');
 const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'),
       tDue=el('#tDue'), tStatus=el('#tStatus'),
       selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'),
-      eisenForm=el('#eisenForm'), eisenScore=el('#eisenScore');
+      eisenForm=el('#eisenForm');
 
 el('#fabAdd').onclick=()=>openTodoModal();
 
-function setEisenUI(e){ els('.sw', eisenForm).forEach(b=>{
-  const k=b.dataset.k; b.classList.toggle('on', !!e[k]); }); eisenScore.textContent='P:'+((e.impact?4:0)+(e.important?2:0)+(e.urgent?1:0)); }
+function setEisenUI(e){ els('.d', eisenForm).forEach(b=>{ const k=b.dataset.k; b.classList.toggle('on', !!e[k]); }); }
 eisenForm.addEventListener('click', (ev)=>{
-  const btn=ev.target.closest('.sw'); if(!btn) return;
+  const btn=ev.target.closest('.d'); if(!btn) return;
   btn.classList.toggle('on');
-  const val=[...els('.sw',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0});
-  eisenScore.textContent='P:'+((val.impact?4:0)+(val.important?2:0)+(val.urgent?1:0));
 });
 
 function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
@@ -647,7 +586,6 @@ function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
   }
   dlgTodo.showModal();
 }
-
 function refreshProjectSelects(){
   const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   tProject.innerHTML=opts;
@@ -669,12 +607,12 @@ el('#btnSaveTodo').onclick=e=>{
   const projectId=tProject.value||'';
   const waitingOn=new Set(getMultiSel(selWaitingOn));
   const waitingOnMe=new Set(getMultiSel(selWaitingOnMe));
-  const ev=[...els('.sw',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0});
+  const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0});
 
   const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId,
     people:[...new Set([...waitingOn,...waitingOnMe])],
-    tags: (el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
-    eisen: ev,
+    tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+    eisen:ev,
     due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now()
   };
   store.todos[id]=todo;
@@ -694,11 +632,8 @@ el('#btnSaveTodo').onclick=e=>{
     if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id);
   });
 
-  // optional placement if created from a column
-  if(pendingPlacement && !isEdit){
-    moveInKanban(id, pendingPlacement.colId);
-    pendingPlacement=null;
-  }
+  // if created from a board column, place it
+  if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; }
 
   save(); dlgTodo.close(); render(true);
 };
@@ -711,7 +646,7 @@ const aSearch=el('#aSearch'), aProject=el('#aProject'), aPerson=el('#aPerson'),
 let attachCtx=null;
 
 function openAttachModal(ctx){
-  attachCtx=ctx; // {type:'person', personId, side} or {type:'kanban', boardId, colId}
+  attachCtx=ctx;
   const title=ctx.type==='person'
     ? `Attach tasks → ${store.people[ctx.personId]?.name} · ${ctx.side==='waitingForMe'?'I’m waiting on them':'They’re waiting on me'}`
     : `Attach tasks → Board “${store.kanbans[ctx.boardId]?.name}”, Column “${store.kanbans[ctx.boardId]?.columns.find(c=>c.id===ctx.colId)?.name}”`;
@@ -734,14 +669,13 @@ function renderAttachList(){
   const person=aPerson.value; if(person) items=items.filter(t=>(t.people||[]).includes(person));
   const st=aStatus.value; if(st) items=items.filter(t=>t.status===st);
 
-  // exclude already attached
   if(attachCtx?.type==='person'){
     const p=store.people[attachCtx.personId]; const arr=(p?.[attachCtx.side]||[]);
     items=items.filter(t=>!arr.includes(t.id));
   }else if(attachCtx?.type==='kanban'){
     const kb=store.kanbans[attachCtx.boardId];
     const set=new Set(kb?.columns.flatMap(c=>c.todoIds)||[]);
-    items=items.filter(t=>!set.has(t.id)); // exclude tasks already on ANY column of this board
+    items=items.filter(t=>!set.has(t.id)); // exclude any already on this board
   }
 
   const [key,dir]=aSort.value.split('-');
@@ -759,14 +693,14 @@ function renderAttachList(){
     return `<div class="todoRow" data-id="${t.id}">
       <input type="checkbox" data-id="${t.id}" />
       <div class="title">${t.title}</div>
-      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</div>
-      <div class="switch3" data-id="${t.id}">
-        <span class="sw h ${t.eisen?.impact?'on':''}">H</span>
-        <span class="sw i ${t.eisen?.important?'on':''}">I</span>
-        <span class="sw u ${t.eisen?.urgent?'on':''}">U</span>
+      <div class="hiu">
+        <span class="d h ${t.eisen?.impact?'on':''}"></span>
+        <span class="d i ${t.eisen?.important?'on':''}"></span>
+        <span class="d u ${t.eisen?.urgent?'on':''}"></span>
       </div>
+      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</div>
       <div class="badge">${fmtDue(t.due)}</div>
-      <div class="badge">P:${score(t)}</div>
+      <div class="actions"></div>
     </div>`;
   }).join('');
 }
@@ -785,12 +719,12 @@ el('#btnAttachConfirm').onclick=e=>{
 };
 
 /*** INIT & RENDER ***/
-function render(force=false){
+function render(){
   els('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===store.current.tab));
   ['todos','projects','people','kanban'].forEach(id=>el('#view-'+id).classList.toggle('hidden',store.current.tab!==id));
   renderTodos(); renderProjects(); renderPeople(); renderKanban();
 }
-render(true);
+render();
 </script>
 </body>
 </html>
