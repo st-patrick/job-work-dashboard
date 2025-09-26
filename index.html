@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Job Work Dashboard Manager — MVP</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#12151c; --card:#171a23; --fg:#e9edf5; --muted:#9aa0aa;
+    --acc:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#dc2626; --border:#232838;
+    --impact:#2563eb; --important:#16a34a; --urgent:#dc2626;
+    --shadow:0 12px 36px rgba(0,0,0,.35);
+    --radius:16px; --gap:12px; --pad:14px; --tap:38px; --maxw:1100px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f7fb; --panel:#fff; --card:#fff; --fg:#0b0d12; --muted:#667084;
+      --acc:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#dc2626; --border:#e6e8ef;
+      --impact:#1d4ed8; --important:#15803d; --urgent:#b91c1c;
+      --shadow:0 10px 26px rgba(0,0,0,.07);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+  a{color:var(--acc);text-decoration:none}
+  button{cursor:pointer}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:clamp(8px,2vw,14px)}
+  header{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.2) blur(6px);
+    background:color-mix(in oklab,var(--bg) 82%,transparent);border-bottom:1px solid var(--border)}
+  .topbar{display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;
+    background:radial-gradient(80% 80% at 20% 20%,var(--acc),transparent),var(--panel);
+    box-shadow:var(--shadow);font-weight:800}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);padding:6px;border-radius:999px}
+  .tab{padding:8px 12px;border-radius:999px;border:1px solid transparent;background:transparent;font-weight:600;color:var(--muted)}
+  .tab.active{background:color-mix(in oklab,var(--acc) 12%,transparent);color:var(--fg);border-color:color-mix(in oklab,var(--acc) 30%,transparent)}
+  .rightbar{display:flex;align-items:center;gap:8px}
+  .iconbtn{min-width:var(--tap);height:var(--tap);border-radius:12px;border:1px solid var(--border);background:var(--panel);
+    display:grid;place-items:center;box-shadow:var(--shadow);font-size:18px;color:var(--fg)}
+  .hidden{display:none!important}
+
+  .panel{margin-top:12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:var(--pad)}
+
+  .filters{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+  @media (max-width:800px){.filters{grid-template-columns:1fr 1fr}}
+  select,input[type="text"],input[type="date"],textarea{
+    width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--fg)}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--border);font-size:12px}
+  .pill .dot{width:8px;height:8px;border-radius:999px;background:currentColor}
+  .badge{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel)}
+  .status-todo{background:transparent}.status-in-progress{background:color-mix(in oklab,var(--acc) 10%,transparent)}
+  .status-review{background:color-mix(in oklab,var(--warn) 16%,transparent)}.status-done{background:color-mix(in oklab,var(--ok) 16%,transparent)}
+  .muted{color:var(--muted)} .note{font-size:12px;color:var(--muted)}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .action{background:var(--acc)!important;color:#fff!important;border-color:transparent!important}
+
+  /* Compact desktop todo rows with inline quick edit */
+  .list-todos{display:grid;gap:8px;margin-top:12px}
+  .todoRow{
+    border:1px solid var(--border);background:var(--card);border-radius:10px;padding:6px 8px;
+    display:grid;gap:8px;align-items:center;
+    grid-template-columns:minmax(110px,140px) 1fr minmax(140px,180px) minmax(130px,170px) 70px 84px;
+  }
+  .todoRow .title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
+  .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
+  .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:6px}
+  .todoRow .actions{display:flex;gap:6px;justify-content:flex-end}
+  .todoRow .pill,.todoRow .badge{padding:2px 8px;font-size:12px}
+  @media (max-width:1000px){
+    .todoRow{grid-template-columns:1fr;align-items:start}
+    .todoRow .actions{justify-content:flex-start}
+  }
+
+  /* Eisenhower HIU switches */
+  .switch3{display:inline-flex;gap:6px;align-items:center}
+  .sw{
+    width:28px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--panel);
+    display:grid;place-items:center;font:700 11px/1 system-ui;color:var(--muted);
+  }
+  .sw.h.on{background:var(--impact);color:#fff;border-color:transparent}
+  .sw.i.on{background:var(--important);color:#fff;border-color:transparent}
+  .sw.u.on{background:var(--urgent);color:#fff;border-color:transparent}
+
+  .list{display:grid;gap:10px;margin-top:12px}
+  .card{border:1px solid var(--border);background:var(--card);border-radius:14px;padding:12px;display:grid;gap:6px}
+  .cardhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .cardtitle{font-weight:700}
+  .inline-list{font-size:12px;color:var(--muted)}
+  .inline-list .item{display:inline}.inline-list .sep{opacity:.5;margin:0 6px}
+
+  .grid-boards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media (max-width:900px){.grid-boards{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.grid-boards{grid-template-columns:1fr}}
+  .column{background:var(--panel);border:1px dashed var(--border);border-radius:14px;padding:10px;min-height:140px}
+  .colhead{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:6px;font-weight:700}
+  .coltools{display:flex;gap:6px;align-items:center}
+  .dropzone{min-height:80px}.dropzone.over{outline:2px solid var(--acc);outline-offset:2px;border-radius:12px}
+
+  .fab{position:fixed;right:16px;bottom:16px;z-index:20;width:56px;height:56px;border-radius:18px;background:var(--acc);color:#fff;border:none;box-shadow:var(--shadow);font-size:28px;display:grid;place-items:center}
+
+  dialog{border:none;padding:0;border-radius:18px;width:min(780px,92vw);background:var(--panel);color:var(--fg)}
+  dialog::backdrop{background:rgba(0,0,0,.35)}
+  .modal{padding:16px} .modal h3{margin:0 0 8px 0}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:700px){.row{grid-template-columns:1fr}}
+  .tiny{font-size:12px}
+  .xbtn{border:none;background:transparent;font-size:14px;color:var(--muted);cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap topbar">
+    <div class="brand">
+      <div class="logo">JW</div>
+      <div>
+        <div style="font-weight:800">Job Work Dashboard</div>
+        <div class="tiny muted">Single-file MVP · localStorage · Light/Dark</div>
+      </div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="todos">Todos</button>
+      <button class="tab" data-tab="projects">Projects</button>
+      <button class="tab" data-tab="people">People</button>
+      <button class="tab" data-tab="kanban">Kanban</button>
+    </div>
+    <div class="rightbar">
+      <button class="iconbtn" id="btnExport" title="Export backup (download JSON)">⬇️</button>
+      <button class="iconbtn" id="btnImport" title="Import backup (upload JSON)">⬆️</button>
+      <input type="file" id="fileImport" accept="application/json" class="hidden">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- TODOS -->
+  <section id="view-todos" class="panel">
+    <div class="filters">
+      <div><label>Search</label><input type="text" id="fSearch" placeholder="Search anything…"></div>
+      <div><label>Project</label><select id="fProject"><option value="">All projects</option></select></div>
+      <div><label>Person</label><select id="fPerson"><option value="">All people</option></select></div>
+      <div><label>Status</label><select id="fStatus">
+        <option value="">Any</option><option value="todo">Todo</option><option value="in-progress">In Progress</option><option value="review">Review</option><option value="done">Done</option>
+      </select></div>
+    </div>
+    <div class="toolbar">
+      <div><label class="tiny muted">Sort by</label>
+        <select id="fSort">
+          <option value="due-asc">Due ↑</option><option value="due-desc">Due ↓</option>
+          <option value="priority-desc">Priority ↓</option><option value="created-desc">Created ↓</option>
+          <option value="title-asc">Title A→Z</option>
+        </select>
+      </div>
+      <span class="note" id="countInfo"></span>
+    </div>
+    <div class="list-todos" id="todoList"></div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="view-projects" class="panel hidden">
+    <div class="toolbar"><button class="iconbtn action" id="btnAddProject" title="Add project">＋</button>
+      <span class="note">Inline, ultra-compact todos per project.</span></div>
+    <div class="list" id="projectList"></div>
+  </section>
+
+  <!-- PEOPLE -->
+  <section id="view-people" class="panel hidden">
+    <div class="toolbar"><button class="iconbtn action" id="btnAddPerson" title="Add person">＋</button>
+      <span class="note">Attach existing tasks; tap × to remove.</span></div>
+    <div class="list" id="peopleList"></div>
+  </section>
+
+  <!-- KANBAN -->
+  <section id="view-kanban" class="panel hidden">
+    <div class="toolbar">
+      <div><label class="tiny muted">Board</label><select id="kbSelect"></select></div>
+      <div><label class="tiny muted">Filter by project</label><select id="kbProject"><option value="">All</option></select></div>
+      <button class="iconbtn action" id="btnAddBoard" title="New board">＋</button>
+    </div>
+    <div class="grid-boards" id="kanbanGrid"></div>
+  </section>
+</main>
+
+<button class="fab" id="fabAdd" title="Add todo">＋</button>
+
+<!-- MODAL: ADD/EDIT TODO -->
+<dialog id="dlgTodo">
+  <form method="dialog" class="modal" id="todoForm">
+    <h3 id="todoFormTitle">New Todo</h3>
+    <div class="row">
+      <div><label>Title</label><input type="text" id="tTitle" required></div>
+      <div><label>Project</label><select id="tProject"></select></div>
+    </div>
+    <div class="row">
+      <div><label>Due date</label><input type="date" id="tDue"></div>
+      <div><label>Status</label><select id="tStatus">
+        <option value="todo">Todo</option><option value="in-progress">In Progress</option>
+        <option value="review">Review</option><option value="done">Done</option></select></div>
+    </div>
+    <div>
+      <label>Eisenhower (H/I/U)</label>
+      <div class="switch3" id="eisenForm">
+        <button type="button" class="sw h" data-k="impact" title="High impact (4)">H</button>
+        <button type="button" class="sw i" data-k="important" title="Important (2)">I</button>
+        <button type="button" class="sw u" data-k="urgent" title="Urgent (1)">U</button>
+        <span class="badge" id="eisenScore">P:0</span>
+      </div>
+    </div>
+    <div><label>Tags (comma separated)</label><input type="text" id="tTags" placeholder="design, api, review"></div>
+    <div><label>Notes</label><textarea id="tNotes" rows="3" placeholder="Optional details…"></textarea></div>
+    <div class="row">
+      <div><label>I’m waiting on… (multi-select)</label><select id="selWaitingOn" multiple size="6"></select></div>
+      <div><label>They’re waiting on me… (multi-select)</label><select id="selWaitingOnMe" multiple size="6"></select></div>
+    </div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button value="cancel" class="pill">Cancel</button>
+      <button id="btnSaveTodo" value="default" class="pill action">Save</button>
+    </div>
+    <input type="hidden" id="tId">
+  </form>
+</dialog>
+
+<!-- MODAL: ADD PROJECT -->
+<dialog id="dlgProject">
+  <form method="dialog" class="modal" id="projectForm">
+    <h3>New Project</h3>
+    <div class="row">
+      <div><label>Name</label><input type="text" id="pName" required></div>
+      <div><label>Color</label><input type="color" id="pColor" value="#7cc9ff"></div>
+    </div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button value="cancel" class="pill">Cancel</button>
+      <button id="btnSaveProject" value="default" class="pill action">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- MODAL: ADD PERSON -->
+<dialog id="dlgPerson">
+  <form method="dialog" class="modal" id="personForm">
+    <h3>New Person</h3>
+    <div class="row">
+      <div><label>Name</label><input type="text" id="sName" required></div>
+      <div><label>Initials</label><input type="text" id="sInit" placeholder="AB" maxlength="3"></div>
+    </div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button value="cancel" class="pill">Cancel</button>
+      <button id="btnSavePerson" value="default" class="pill action">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- MODAL: ATTACH EXISTING TASKS -->
+<dialog id="dlgAttach">
+  <form method="dialog" class="modal" id="attachForm">
+    <h3 id="attachTitle">Attach tasks</h3>
+    <div class="filters">
+      <div><label>Search</label><input type="text" id="aSearch" placeholder="Search anything…"></div>
+      <div><label>Project</label><select id="aProject"><option value="">All projects</option></select></div>
+      <div><label>Person</label><select id="aPerson"><option value="">All people</option></select></div>
+      <div><label>Status</label><select id="aStatus"><option value="">Any</option><option value="todo">Todo</option><option value="in-progress">In Progress</option><option value="review">Review</option><option value="done">Done</option></select></div>
+    </div>
+    <div class="toolbar">
+      <div><label class="tiny muted">Sort by</label>
+        <select id="aSort">
+          <option value="due-asc">Due ↑</option><option value="due-desc">Due ↓</option>
+          <option value="priority-desc">Priority ↓</option><option value="created-desc">Created ↓</option>
+          <option value="title-asc">Title A→Z</option>
+        </select>
+      </div>
+      <span class="note" id="aCount"></span>
+    </div>
+    <div class="list-todos" id="attachList"></div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button value="cancel" class="pill">Cancel</button>
+      <button id="btnAttachConfirm" value="default" class="pill action">Attach</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/*** DATA ***/
+const LS_KEY='jwdm_v1';
+const demoData=()=>({
+  meta:{version:2,lastId:100},
+  current:{tab:'todos',sort:'due-asc',activeKanbanId:'kb1'},
+  todos:{
+    1:{id:'1',title:'Finalize wireframes',notes:'Homepage + pricing',projectId:'p1',people:[],tags:['design'],priority:'H',due:dateStrOffset(2),created:Date.now()-86400000*2,status:'in-progress'},
+    2:{id:'2',title:'API auth flow',notes:'Add refresh tokens',projectId:'p1',people:['a'],tags:['api','security'],priority:'M',due:dateStrOffset(5),created:Date.now()-86400000*3,status:'todo'},
+    3:{id:'3',title:'Client feedback pass',notes:'Summarize and triage',projectId:'p2',people:['b'],tags:['pm'],priority:'M',due:dateStrOffset(1),created:Date.now()-86400000,status:'review'},
+    4:{id:'4',title:'Billing bugfix',notes:'Rounding issue',projectId:'p1',people:['c'],tags:['bug'],priority:'H',due:dateStrOffset(0),created:Date.now()-3600*1000,status:'in-progress'},
+    5:{id:'5',title:'Write release notes',notes:'',projectId:'p2',people:[],tags:['docs'],priority:'L',due:'',created:Date.now(),status:'todo'}
+  },
+  projects:{ p1:{id:'p1',name:'LaunchPad',color:'#7cc9ff',todoIds:['1','2','4']}, p2:{id:'p2',name:'Client Alpha',color:'#ffd36b',todoIds:['3','5']} },
+  people:{
+    a:{id:'a',name:'Alex',initials:'AX',waitingForMe:['2'],waitingForThem:['3']},
+    b:{id:'b',name:'Bea',initials:'BE',waitingForMe:['3'],waitingForThem:[]},
+    c:{id:'c',name:'Chris',initials:'CH',waitingForMe:['4'],waitingForThem:[]}
+  },
+  kanbans:{
+    kb1:{id:'kb1',name:'Default',columns:[
+      {id:'col-backlog',name:'Backlog',todoIds:['5']},
+      {id:'col-progress',name:'In Progress',todoIds:['1','4']},
+      {id:'col-review',name:'Review',todoIds:['3']},
+      {id:'col-done',name:'Done',todoIds:[]}
+    ]}
+  }
+});
+function dateStrOffset(days){const d=new Date(Date.now()+days*86400000);return d.toISOString().slice(0,10);}
+
+let store=load(); migrate();
+
+function load(){try{const raw=localStorage.getItem(LS_KEY);
+  if(!raw){const d=demoData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); return structuredClone(d);}
+  return JSON.parse(raw);}catch(e){console.error(e);const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}}
+function save(){localStorage.setItem(LS_KEY,JSON.stringify(store));}
+function nextId(){store.meta.lastId++;return String(store.meta.lastId);}
+
+/*** HELPERS ***/
+const el=(q,r=document)=>r.querySelector(q), els=(q,r=document)=>Array.from(r.querySelectorAll(q));
+function fmtDue(d){if(!d) return '—';const diff=(new Date(d)-new Date().setHours(0,0,0,0))/86400000;const days=Math.round(diff);
+  if(days<0) return `⚠ ${Math.abs(days)}d overdue`; if(days===0) return 'Today'; if(days===1) return 'Tomorrow'; return `in ${days}d`; }
+const pColor=p=> '#'+(p.initials.charCodeAt(0)*99991 % 0xffffff).toString(16).padStart(6,'6f6f6f');
+function score(t){const e=t.eisen||{impact:0,important:0,urgent:0}; return (e.impact?4:0)+(e.important?2:0)+(e.urgent?1:0);}
+function migrate(){
+  // ensure eisen fields exist and derive from legacy priority if needed
+  Object.values(store.todos).forEach(t=>{
+    if(!t.eisen){
+      const m = t.priority || 'M';
+      if(m==='H') t.eisen={impact:1,important:1,urgent:1};
+      else if(m==='M') t.eisen={impact:1,important:1,urgent:0};
+      else t.eisen={impact:1,important:0,urgent:0};
+    }
+  });
+}
+
+/*** NAV + IO ***/
+const tabs=el('#tabs');
+tabs.addEventListener('click',e=>{
+  const b=e.target.closest('.tab'); if(!b) return;
+  els('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active');
+  ['todos','projects','people','kanban'].forEach(id=>el('#view-'+id).classList.toggle('hidden',b.dataset.tab!==id));
+  store.current.tab=b.dataset.tab; save(); render();
+});
+el('#btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`jwdm-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+};
+el('#btnImport').onclick=()=>el('#fileImport').click();
+el('#fileImport').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{try{const data=JSON.parse(r.result); if(!data.todos||!data.projects||!data.people) throw new Error('Invalid backup');
+    store=data; migrate(); save(); render(true);}catch(err){alert('Import failed: '+err.message);}};
+  r.readAsText(f); e.target.value='';
+});
+
+/*** TODOS VIEW ***/
+const fSearch=el('#fSearch'), fProject=el('#fProject'), fPerson=el('#fPerson'),
+      fStatus=el('#fStatus'), fSort=el('#fSort'), todoList=el('#todoList');
+[fSearch,fProject,fPerson,fStatus,fSort].forEach(c=>c.addEventListener('input',renderTodos));
+
+function renderTodos(){
+  fProject.innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  fPerson.innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  let items=Object.values(store.todos);
+
+  // universal search
+  const q=fSearch.value.trim().toLowerCase();
+  if(q){
+    items=items.filter(t=>{
+      const proj=store.projects[t.projectId]; const people=(t.people||[]).map(id=>store.people[id]?.name).filter(Boolean).join(' ');
+      const hay=[t.title,t.notes,(t.tags||[]).join(' '),t.status,score(t),t.id,t.due,proj?.name||'',people].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  const proj=fProject.value; if(proj) items=items.filter(t=>t.projectId===proj);
+  const person=fPerson.value; if(person) items=items.filter(t=>(t.people||[]).includes(person));
+  const st=fStatus.value; if(st) items=items.filter(t=>t.status===st);
+
+  const [key,dir]=fSort.value.split('-');
+  items.sort((a,b)=>{const m=dir==='asc'?1:-1;
+    if(key==='due'){const ad=a.due||'9999-12-31', bd=b.due||'9999-12-31'; return ad<bd?-1*m:ad>bd?1*m:0;}
+    if(key==='priority'){return (score(a)-score(b))*-1*m;}
+    if(key==='created'){return (a.created||0)<(b.created||0)?1*m:-1*m;}
+    if(key==='title'){return (a.title||'').localeCompare(b.title||'')*(dir==='asc'?1:-1);}
+    return 0;
+  });
+
+  el('#countInfo').textContent=`${items.length} shown · ${Object.keys(store.todos).length} total`;
+
+  todoList.innerHTML=items.map(t=>{
+    const p=store.projects[t.projectId]; const s=score(t);
+    const ei=t.eisen||{impact:0,important:0,urgent:0};
+    return `<div class="todoRow" data-id="${t.id}">
+      <select class="statusSel badge status-${t.status||'todo'}" data-act="setStatus" data-id="${t.id}">
+        ${['todo','in-progress','review','done'].map(sv=>`<option value="${sv}" ${t.status===sv?'selected':''}>${sv}</option>`).join('')}
+      </select>
+      <div class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit">${t.title}</div>
+      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
+      <div class="switch3" data-id="${t.id}">
+        <button class="sw h ${ei.impact?'on':''}" data-act="toggle" data-k="impact" title="High impact (4)">H</button>
+        <button class="sw i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important (2)">I</button>
+        <button class="sw u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent (1)">U</button>
+      </div>
+      <input type="date" class="badge" style="padding:4px 8px;border-radius:8px" value="${t.due||''}" data-act="setDue" data-id="${t.id}">
+      <div class="actions">
+        <span class="badge" title="Priority score">P:${s}</span>
+        <button class="iconbtn" data-act="edit" data-id="${t.id}" title="Open details">✏️</button>
+        <button class="iconbtn" data-act="quickDone" data-id="${t.id}" title="Toggle done">✅</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // interactions
+  todoList.onchange=e=>{
+    const id=e.target.dataset.id;
+    if(e.target.dataset.act==='setStatus'){store.todos[id].status=e.target.value; save(); renderTodos();}
+    if(e.target.dataset.act==='setDue'){store.todos[id].due=e.target.value; save(); renderTodos();}
+  };
+  todoList.onclick=e=>{
+    const id=e.target.dataset.id;
+    if(e.target.dataset.act==='edit') openTodoModal(id);
+    if(e.target.dataset.act==='quickDone'){const t=store.todos[id]; t.status=(t.status==='done'?'todo':'done'); save(); renderTodos();}
+    if(e.target.dataset.act==='toggle'){
+      const k=e.target.dataset.k; const t=store.todos[e.target.closest('.switch3').dataset.id];
+      t.eisen = t.eisen||{impact:0,important:0,urgent:0}; t.eisen[k]=t.eisen[k]?0:1;
+      save(); renderTodos();
+    }
+  };
+  // contenteditable title
+  todoList.addEventListener('keydown', (e)=>{
+    if(e.target.dataset.act==='editTitle' && e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
+  });
+  todoList.addEventListener('blur', (e)=>{
+    if(e.target.dataset.act==='editTitle'){
+      const id=e.target.dataset.id; const v=e.target.textContent.trim();
+      store.todos[id].title=v||store.todos[id].title; save();
+    }
+  }, true);
+}
+
+/*** PROJECTS VIEW (inline) ***/
+const projectList=el('#projectList');
+el('#btnAddProject').onclick=()=>el('#dlgProject').showModal();
+el('#btnSaveProject').onclick=e=>{
+  e.preventDefault();
+  const name=el('#pName').value.trim(); if(!name) return;
+  const color=el('#pColor').value||'#7cc9ff'; const id='p'+nextId();
+  store.projects[id]={id,name,color,todoIds:[]}; save(); el('#dlgProject').close(); el('#projectForm').reset();
+  renderProjects(); refreshProjectSelects();
+};
+function renderProjects(){
+  projectList.innerHTML=Object.values(store.projects).map(p=>{
+    const todos=(p.todoIds||[]).map(id=>store.todos[id]).filter(Boolean);
+    const inline = todos.map((t,i)=>`<span class="item">(${score(t)}) ${t.title}</span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
+    return `<div class="card">
+      <div class="cardhead">
+        <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> ${p.name}</div>
+        <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
+      </div>
+      <div class="inline-list">${inline || '<span class="note">No todos yet.</span>'}</div>
+    </div>`;
+  }).join('');
+  projectList.onclick=e=>{ if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid); };
+}
+
+/*** PEOPLE VIEW (quick remove + attach modal) ***/
+const peopleList=el('#peopleList');
+el('#btnAddPerson').onclick=()=>el('#dlgPerson').showModal();
+el('#btnSavePerson').onclick=e=>{
+  e.preventDefault();
+  const name=el('#sName').value.trim(); if(!name) return;
+  const initials=(el('#sInit').value.trim()||name.split(/\s+/).map(s=>s[0]).join('').slice(0,3)).toUpperCase();
+  const id=initials.toLowerCase()+nextId();
+  store.people[id]={id,name,initials,waitingForMe:[],waitingForThem:[]}; save(); el('#dlgPerson').close(); el('#personForm').reset();
+  renderPeople(); refreshPeopleSelects();
+};
+function recomputeTodoPeople(todoId){
+  const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id);
+  const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];
+}
+function renderPeople(){
+  peopleList.innerHTML=Object.values(store.people).map(p=>{
+    const listHtml=(arr,side)=> (arr||[]).map(tid=>{
+      const t=store.todos[tid]; if(!t) return '';
+      return `<span class="pill" data-pid="${p.id}" data-side="${side}" data-tid="${tid}">
+        (${score(t)}) ${t.title}${t.due?` · ${fmtDue(t.due)}`:''}
+        <button class="xbtn" title="Remove">×</button>
+      </span>`;
+    }).join('') || '<span class="note">—</span>';
+    return `<div class="card">
+      <div class="cardhead">
+        <div class="cardtitle" title="${p.id}">
+          <span class="pill" style="background:${pColor(p)};color:#000;border-color:transparent">${p.initials}</span> ${p.name}
+        </div>
+        <div class="coltools">
+          <button class="iconbtn action" data-pid="${p.id}" data-act="addWithPerson" title="New todo for ${p.name}">＋</button>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <div class="tiny muted">I’m waiting on them</div>
+          <div class="toolbar">
+            <button class="pill action" data-pid="${p.id}" data-side="waitingForMe" data-act="openAttach">Attach tasks</button>
+          </div>
+          <div class="chips">${listHtml(p.waitingForMe,'waitingForMe')}</div>
+        </div>
+        <div>
+          <div class="tiny muted">They’re waiting on me</div>
+          <div class="toolbar">
+            <button class="pill action" data-pid="${p.id}" data-side="waitingForThem" data-act="openAttach">Attach tasks</button>
+          </div>
+          <div class="chips">${listHtml(p.waitingForThem,'waitingForThem')}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  peopleList.onclick=e=>{
+    const act=e.target.dataset.act;
+    if(act==='addWithPerson'){ openTodoModal(null,null,e.target.dataset.pid); return; }
+    if(act==='openAttach'){ openAttachModal({type:'person', personId:e.target.dataset.pid, side:e.target.dataset.side}); return; }
+    if(e.target.classList.contains('xbtn')){
+      const wrap=e.target.closest('.pill'); const pid=wrap.dataset.pid, side=wrap.dataset.side, tid=wrap.dataset.tid;
+      const p=store.people[pid]; p[side]=p[side].filter(id=>id!==tid); recomputeTodoPeople(tid); save(); renderPeople(); renderTodos(); renderKanban();
+    }
+  };
+}
+
+/*** KANBAN ***/
+const kbSelect=el('#kbSelect'), kbProject=el('#kbProject'), kanbanGrid=el('#kanbanGrid');
+el('#btnAddBoard').onclick=()=>{
+  const name=prompt('Board name?'); if(!name) return;
+  const id='kb'+nextId();
+  store.kanbans[id]={id,name,columns:[
+    {id:'col-'+nextId(),name:'Backlog',todoIds:[]},
+    {id:'col-'+nextId(),name:'In Progress',todoIds:[]},
+    {id:'col-'+nextId(),name:'Review',todoIds:[]},
+    {id:'col-'+nextId(),name:'Done',todoIds:[]},
+  ]};
+  store.current.activeKanbanId=id; save(); renderKanban();
+};
+kbSelect.onchange=()=>{store.current.activeKanbanId=kbSelect.value; save(); renderKanban();};
+kbProject.onchange=()=>renderKanban();
+
+let pendingPlacement=null; // {boardId,colId} used after creating a new todo from a column
+
+function renderKanban(){
+  const boards=Object.values(store.kanbans);
+  if(!boards.length){kbSelect.innerHTML=''; kanbanGrid.innerHTML='<div class="note">No boards yet. Create one with ＋.</div>'; return;}
+  kbSelect.innerHTML=boards.map(k=>`<option value="${k.id}" ${store.current.activeKanbanId===k.id?'selected':''}>${k.name}</option>`).join('');
+  if(!store.current.activeKanbanId){store.current.activeKanbanId=boards[0].id; save();}
+  kbProject.innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+
+  const kb=store.kanbans[store.current.activeKanbanId];
+  const filterProj=kbProject.value;
+  kanbanGrid.innerHTML=kb.columns.map(col=>{
+    const cards=col.todoIds.map(id=>store.todos[id]).filter(Boolean).filter(t=>!filterProj||t.projectId===filterProj).map(t=>kanbanCard(t)).join('');
+    return `<div class="column" data-col="${col.id}">
+      <div class="colhead">
+        <span>${col.name} <span class="badge">${col.todoIds.length}</span></span>
+        <div class="coltools">
+          <button class="pill action" data-col="${col.id}" data-act="attachToCol" title="Attach existing">＋</button>
+          <button class="pill action" data-col="${col.id}" data-act="newToCol" title="New todo here">✚</button>
+        </div>
+      </div>
+      <div class="dropzone" data-col="${col.id}">${cards||'<div class="note">Drop here…</div>'}</div>
+    </div>`;
+  }).join('');
+
+  els('.card[kb]').forEach(c=>{
+    c.draggable=true;
+    c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',c.dataset.id); c.classList.add('dragging'); ev.dataTransfer.effectAllowed='move';});
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+  });
+  els('.dropzone').forEach(z=>{
+    z.addEventListener('dragover',ev=>{ev.preventDefault(); z.classList.add('over');});
+    z.addEventListener('dragleave',()=>z.classList.remove('over'));
+    z.addEventListener('drop',ev=>{ev.preventDefault(); z.classList.remove('over'); const todoId=ev.dataTransfer.getData('text/plain'); moveInKanban(todoId,z.dataset.col);});
+  });
+}
+function kanbanCard(t){
+  const p=store.projects[t.projectId];
+  return `<div class="card" kb data-id="${t.id}">
+    <div class="cardhead">
+      <div class="cardtitle tiny">(${score(t)}) ${t.title}</div>
+      <button class="iconbtn" title="Edit" data-act="edit" data-id="${t.id}">✏️</button>
+    </div>
+    <div class="toolbar">
+      <span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span>
+      <span class="badge">${fmtDue(t.due)}</span>
+      <span class="badge">${t.status}</span>
+    </div>
+  </div>`;
+}
+function moveInKanban(todoId,toColId){
+  const kb=store.kanbans[store.current.activeKanbanId];
+  kb.columns.forEach(c=>{const i=c.todoIds.indexOf(todoId); if(i>=0) c.todoIds.splice(i,1);});
+  const tgt=kb.columns.find(c=>c.id===toColId); if(tgt && !tgt.todoIds.includes(todoId)) tgt.todoIds.unshift(todoId);
+  save(); renderKanban();
+}
+kanbanGrid.addEventListener('click',e=>{
+  if(e.target.dataset.act==='edit') openTodoModal(e.target.dataset.id);
+  if(e.target.dataset.act==='attachToCol'){ openAttachModal({type:'kanban', boardId:store.current.activeKanbanId, colId:e.target.dataset.col}); }
+  if(e.target.dataset.act==='newToCol'){ pendingPlacement={boardId:store.current.activeKanbanId, colId:e.target.dataset.col}; openTodoModal(); }
+});
+
+/*** TODO MODAL ***/
+const dlgTodo=el('#dlgTodo');
+const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'),
+      tDue=el('#tDue'), tStatus=el('#tStatus'),
+      selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'),
+      eisenForm=el('#eisenForm'), eisenScore=el('#eisenScore');
+
+el('#fabAdd').onclick=()=>openTodoModal();
+
+function setEisenUI(e){ els('.sw', eisenForm).forEach(b=>{
+  const k=b.dataset.k; b.classList.toggle('on', !!e[k]); }); eisenScore.textContent='P:'+((e.impact?4:0)+(e.important?2:0)+(e.urgent?1:0)); }
+eisenForm.addEventListener('click', (ev)=>{
+  const btn=ev.target.closest('.sw'); if(!btn) return;
+  btn.classList.toggle('on');
+  const val=[...els('.sw',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0});
+  eisenScore.textContent='P:'+((val.impact?4:0)+(val.important?2:0)+(val.urgent?1:0));
+});
+
+function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
+  refreshProjectSelects(); refreshPeopleSelects();
+  if(id){
+    const t=store.todos[id];
+    tId.value=t.id; tTitle.value=t.title||''; tNotes.value=t.notes||''; tProject.value=t.projectId||'';
+    tDue.value=t.due||''; tStatus.value=t.status||'todo';
+    const waitingOnIds=Object.values(store.people).filter(p=>p.waitingForMe?.includes(id)).map(p=>p.id);
+    const waitingOnMeIds=Object.values(store.people).filter(p=>p.waitingForThem?.includes(id)).map(p=>p.id);
+    setMultiSel(selWaitingOn,new Set(waitingOnIds)); setMultiSel(selWaitingOnMe,new Set(waitingOnMeIds));
+    setEisenUI(t.eisen||{impact:0,important:0,urgent:0});
+    el('#todoFormTitle').textContent='Edit Todo';
+  }else{
+    tId.value=''; el('#todoForm').reset(); tProject.value=presetProjectId||'';
+    setMultiSel(selWaitingOn,new Set(presetPersonId?[presetPersonId]:[])); setMultiSel(selWaitingOnMe,new Set());
+    setEisenUI({impact:0,important:0,urgent:0});
+    el('#todoFormTitle').textContent='New Todo';
+  }
+  dlgTodo.showModal();
+}
+
+function refreshProjectSelects(){
+  const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  tProject.innerHTML=opts;
+  el('#aProject').innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  el('#kbProject').innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+function refreshPeopleSelects(){
+  const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join('');
+  selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options;
+  el('#fPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
+function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);}
+
+el('#btnSaveTodo').onclick=e=>{
+  e.preventDefault();
+  const isEdit=!!tId.value; const id=isEdit?tId.value:nextId();
+  const projectId=tProject.value||'';
+  const waitingOn=new Set(getMultiSel(selWaitingOn));
+  const waitingOnMe=new Set(getMultiSel(selWaitingOnMe));
+  const ev=[...els('.sw',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0});
+
+  const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId,
+    people:[...new Set([...waitingOn,...waitingOnMe])],
+    tags: (el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+    eisen: ev,
+    due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now()
+  };
+  store.todos[id]=todo;
+
+  // projects index
+  Object.values(store.projects).forEach(p=>{
+    const has=p.todoIds?.includes(id);
+    if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);}
+    if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);}
+  });
+
+  // people lists
+  Object.values(store.people).forEach(p=>{
+    p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id);
+    p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id);
+    if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id);
+    if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id);
+  });
+
+  // optional placement if created from a column
+  if(pendingPlacement && !isEdit){
+    moveInKanban(id, pendingPlacement.colId);
+    pendingPlacement=null;
+  }
+
+  save(); dlgTodo.close(); render(true);
+};
+
+/*** ATTACH MODAL ***/
+const dlgAttach=el('#dlgAttach');
+const aSearch=el('#aSearch'), aProject=el('#aProject'), aPerson=el('#aPerson'),
+      aStatus=el('#aStatus'), aSort=el('#aSort'), attachList=el('#attachList');
+[aSearch,aProject,aPerson,aStatus,aSort].forEach(c=>c.addEventListener('input',renderAttachList));
+let attachCtx=null;
+
+function openAttachModal(ctx){
+  attachCtx=ctx; // {type:'person', personId, side} or {type:'kanban', boardId, colId}
+  const title=ctx.type==='person'
+    ? `Attach tasks → ${store.people[ctx.personId]?.name} · ${ctx.side==='waitingForMe'?'I’m waiting on them':'They’re waiting on me'}`
+    : `Attach tasks → Board “${store.kanbans[ctx.boardId]?.name}”, Column “${store.kanbans[ctx.boardId]?.columns.find(c=>c.id===ctx.colId)?.name}”`;
+  el('#attachTitle').textContent=title;
+  refreshProjectSelects(); refreshPeopleSelects();
+  aSearch.value=''; aProject.value=''; aPerson.value=''; aStatus.value=''; aSort.value='due-asc';
+  renderAttachList(); dlgAttach.showModal();
+}
+function renderAttachList(){
+  let items=Object.values(store.todos);
+  const q=aSearch.value.trim().toLowerCase();
+  if(q){
+    items=items.filter(t=>{
+      const proj=store.projects[t.projectId]; const people=(t.people||[]).map(id=>store.people[id]?.name).filter(Boolean).join(' ');
+      const hay=[t.title,t.notes,(t.tags||[]).join(' '),t.status,score(t),t.id,t.due,proj?.name||'',people].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  const proj=aProject.value; if(proj) items=items.filter(t=>t.projectId===proj);
+  const person=aPerson.value; if(person) items=items.filter(t=>(t.people||[]).includes(person));
+  const st=aStatus.value; if(st) items=items.filter(t=>t.status===st);
+
+  // exclude already attached
+  if(attachCtx?.type==='person'){
+    const p=store.people[attachCtx.personId]; const arr=(p?.[attachCtx.side]||[]);
+    items=items.filter(t=>!arr.includes(t.id));
+  }else if(attachCtx?.type==='kanban'){
+    const kb=store.kanbans[attachCtx.boardId];
+    const set=new Set(kb?.columns.flatMap(c=>c.todoIds)||[]);
+    items=items.filter(t=>!set.has(t.id)); // exclude tasks already on ANY column of this board
+  }
+
+  const [key,dir]=aSort.value.split('-');
+  items.sort((a,b)=>{const m=dir==='asc'?1:-1;
+    if(key==='due'){const ad=a.due||'9999-12-31', bd=b.due||'9999-12-31'; return ad<bd?-1*m:ad>bd?1*m:0;}
+    if(key==='priority'){return (score(a)-score(b))*-1*m;}
+    if(key==='created'){return (a.created||0)<(b.created||0)?1*m:-1*m;}
+    if(key==='title'){return (a.title||'').localeCompare(b.title||'')*(dir==='asc'?1:-1);}
+    return 0;
+  });
+
+  el('#aCount').textContent=`${items.length} candidates`;
+  attachList.innerHTML=items.map(t=>{
+    const p=store.projects[t.projectId];
+    return `<div class="todoRow" data-id="${t.id}">
+      <input type="checkbox" data-id="${t.id}" />
+      <div class="title">${t.title}</div>
+      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</div>
+      <div class="switch3" data-id="${t.id}">
+        <span class="sw h ${t.eisen?.impact?'on':''}">H</span>
+        <span class="sw i ${t.eisen?.important?'on':''}">I</span>
+        <span class="sw u ${t.eisen?.urgent?'on':''}">U</span>
+      </div>
+      <div class="badge">${fmtDue(t.due)}</div>
+      <div class="badge">P:${score(t)}</div>
+    </div>`;
+  }).join('');
+}
+el('#btnAttachConfirm').onclick=e=>{
+  e.preventDefault();
+  const ids=els('input[type="checkbox"]:checked',attachList).map(c=>c.dataset.id);
+  if(!ids.length){dlgAttach.close(); return;}
+  if(attachCtx.type==='person'){
+    const p=store.people[attachCtx.personId]; const arr=(p[attachCtx.side] ||= []);
+    ids.forEach(id=>{ if(!arr.includes(id)) arr.push(id); recomputeTodoPeople(id); });
+    save(); dlgAttach.close(); renderPeople(); renderTodos();
+  }else if(attachCtx.type==='kanban'){
+    ids.forEach(id=>moveInKanban(id, attachCtx.colId));
+    dlgAttach.close();
+  }
+};
+
+/*** INIT & RENDER ***/
+function render(force=false){
+  els('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===store.current.tab));
+  ['todos','projects','people','kanban'].forEach(id=>el('#view-'+id).classList.toggle('hidden',store.current.tab!==id));
+  renderTodos(); renderProjects(); renderPeople(); renderKanban();
+}
+render(true);
+</script>
+</body>
+</html>
