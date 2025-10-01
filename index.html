@@ -61,12 +61,22 @@
     display:grid;gap:6px;align-items:center;
     grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px) 44px;
   }
+  .todoHeader{
+    border:1px solid var(--border);background:var(--panel);border-radius:10px;padding:6px 6px;
+    display:grid;gap:6px;align-items:center;
+    grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px) 44px;
+    font-weight:600;font-size:12px;color:var(--muted);
+  }
   .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:4px}
   .todoRow .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
   .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
   .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
   .todoRow .actions{display:flex;gap:6px;justify-content:flex-end}
-  @media (max-width:900px){ .todoRow{grid-template-columns:1fr} .todoRow .actions{justify-content:flex-start} }
+  @media (max-width:900px){ 
+    .todoRow{grid-template-columns:1fr} 
+    .todoRow .actions{justify-content:flex-start}
+    .todoHeader{display:none} 
+  }
 
   /* HIU strip */
   .hiu{display:inline-grid;grid-auto-flow:column;gap:4px;align-items:center}
@@ -397,7 +407,16 @@ function renderTodos(){
   const sorter=SORTS[fSort.value]||SORTS['due-asc']; items.sort(sorter);
   el('#countInfo').textContent=`${items.length} shown · ${Object.keys(store.todos).length} total`;
 
-  todoList.innerHTML=items.map(t=>{
+  const headerRow = `<div class="todoHeader">
+    <div>Status</div>
+    <div>Title</div>
+    <div>Priority</div>
+    <div>Project</div>
+    <div>Due Date</div>
+    <div>Actions</div>
+  </div>`;
+
+  todoList.innerHTML=headerRow + items.map(t=>{
     const p=store.projects[t.projectId]; const ei=t.eisen||{impact:0,important:0,urgent:0};
     return `<div class="todoRow" data-id="${t.id}">
       <select class="statusSel badge status-${t.status||'todo'}" data-act="setStatus" data-id="${t.id}">
