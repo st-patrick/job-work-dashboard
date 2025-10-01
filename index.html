@@ -436,7 +436,15 @@ function renderTodos(){
 /*** ====== PROJECTS VIEW ====== ***/
 const projectList=el('#projectList');
 el('#btnAddProject').onclick=()=>el('#dlgProject').showModal();
-el('#btnSaveProject').onclick=e=>{e.preventDefault(); const name=el('#pName').value.trim(); if(!name) return; const color=el('#pColor').value||'#7cc9ff'; const id='p'+nextId(); store.projects[id]={id,name,color,todoIds:[]}; save(); el('#dlgProject').close(); el('#projectForm').reset(); renderProjects(); renderTodos();};
+const saveProjectHandler = e=>{e.preventDefault(); const name=el('#pName').value.trim(); if(!name) return; const color=el('#pColor').value||'#7cc9ff'; const id='p'+nextId(); store.projects[id]={id,name,color,todoIds:[]}; save(); el('#dlgProject').close(); el('#projectForm').reset(); renderProjects(); renderTodos();};
+el('#btnSaveProject').onclick=saveProjectHandler;
+// Add Enter key handler for Project modal
+el('#dlgProject').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveProjectHandler(e);
+  }
+});
 function renderProjects(){
   projectList.innerHTML=Object.values(store.projects).map(p=>{
     const todos=(p.todoIds||[]).map(id=>store.todos[id]).filter(Boolean);
@@ -455,7 +463,15 @@ function renderProjects(){
 /*** ====== PEOPLE VIEW ====== ***/
 const peopleList=el('#peopleList');
 el('#btnAddPerson').onclick=()=>el('#dlgPerson').showModal();
-el('#btnSavePerson').onclick=e=>{e.preventDefault(); const name=el('#sName').value.trim(); if(!name) return; const initials=(el('#sInit').value.trim()||name.split(/\s+/).map(s=>s[0]).join('').slice(0,3)).toUpperCase(); const id=initials.toLowerCase()+nextId(); store.people[id]={id,name,initials,waitingForMe:[],waitingForThem:[]}; save(); el('#dlgPerson').close(); el('#personForm').reset(); renderPeople(); renderTodos();};
+const savePersonHandler = e=>{e.preventDefault(); const name=el('#sName').value.trim(); if(!name) return; const initials=(el('#sInit').value.trim()||name.split(/\s+/).map(s=>s[0]).join('').slice(0,3)).toUpperCase(); const id=initials.toLowerCase()+nextId(); store.people[id]={id,name,initials,waitingForMe:[],waitingForThem:[]}; save(); el('#dlgPerson').close(); el('#personForm').reset(); renderPeople(); renderTodos();};
+el('#btnSavePerson').onclick=savePersonHandler;
+// Add Enter key handler for Person modal
+el('#dlgPerson').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    savePersonHandler(e);
+  }
+});
 function recomputeTodoPeople(todoId){const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id); const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];}
 function renderPeople(){
   peopleList.innerHTML=Object.values(store.people).map(p=>{
@@ -538,8 +554,16 @@ kanbanGrid.addEventListener('click',e=>{ if(e.target.dataset.act==='edit') openT
 function openBoardEditor(){ const kb=store.kanbans[store.current.activeKanbanId]; if(!kb) return; el('#bName').value=kb.name; const holder=el('#bCols'); holder.innerHTML = kb.columns.map(c=> `<div class="row" data-col="${c.id}"><div><input type="text" value="${c.name}" data-act="colName"></div><div><button class="pill" data-act="colUp">↑</button> <button class="pill" data-act="colDown">↓</button> <button class="pill" data-act="colDel">🗑</button></div></div>`).join(''); el('#dlgBoard').showModal();
 }
 el('#btnAddCol').onclick=()=>{ const kb=store.kanbans[store.current.activeKanbanId]; const id='col-'+nextId(); kb.columns.push({id,name:'New Column',todoIds:[]}); save(); openBoardEditor(); };
-el('#btnSaveBoard').onclick=(e)=>{ e.preventDefault(); const kb=store.kanbans[store.current.activeKanbanId]; kb.name = el('#bName').value.trim()||kb.name; // names
+const saveBoardHandler = (e)=>{ e.preventDefault(); const kb=store.kanbans[store.current.activeKanbanId]; kb.name = el('#bName').value.trim()||kb.name; // names
   els('#bCols .row').forEach(r=>{ const id=r.dataset.col; const col=kb.columns.find(c=>c.id===id); if(col){ col.name = el('input[data-act="colName"]', r).value.trim()||col.name; }}); save(); el('#dlgBoard').close(); renderKanban(); };
+el('#btnSaveBoard').onclick=saveBoardHandler;
+// Add Enter key handler for Board modal
+el('#dlgBoard').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveBoardHandler(e);
+  }
+});
 el('#bCols')?.addEventListener('click',(e)=>{ const kb=store.kanbans[store.current.activeKanbanId]; const row=e.target.closest('.row'); if(!row) return; const id=row.dataset.col; const i=kb.columns.findIndex(c=>c.id===id); if(e.target.dataset.act==='colUp' && i>0){ const [c]=kb.columns.splice(i,1); kb.columns.splice(i-1,0,c); openBoardEditor(); }
   if(e.target.dataset.act==='colDown' && i<kb.columns.length-1){ const [c]=kb.columns.splice(i,1); kb.columns.splice(i+1,0,c); openBoardEditor(); }
   if(e.target.dataset.act==='colDel'){ if(kb.columns.length<=1) return alert('Need at least one column'); kb.columns.splice(i,1); openBoardEditor(); }
@@ -556,7 +580,15 @@ function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+
 function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; fPerson.innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
-el('#btnSaveTodo').onclick=e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now() }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
+const saveTodoHandler = e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now() }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
+el('#btnSaveTodo').onclick=saveTodoHandler;
+// Add Enter key handler for Todo modal
+dlgTodo.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    saveTodoHandler(e);
+  }
+});
 
 /*** ====== ATTACH MODAL ====== ***/
 const dlgAttach=el('#dlgAttach');
@@ -579,7 +611,15 @@ function renderAttachList(){ let items=Object.values(store.todos); const q=aSear
       <div class="badge">${fmtDue(t.due)}</div>
       <div class="actions"></div>
     </div>`; }).join(''); }
-el('#btnAttachConfirm').onclick=e=>{ e.preventDefault(); const ids=els('input[type="checkbox"]:checked',attachList).map(c=>c.dataset.id); if(!ids.length){dlgAttach.close(); return;} if(attachCtx.type==='person'){ const p=store.people[attachCtx.personId]; const arr=(p[attachCtx.side] ||= []); ids.forEach(id=>{ if(!arr.includes(id)) arr.push(id); recomputeTodoPeople(id); }); save(); dlgAttach.close(); renderPeople(); renderTodos(); } else if(attachCtx.type==='kanban'){ ids.forEach(id=>moveInKanban(id, attachCtx.colId)); dlgAttach.close(); } };
+const attachConfirmHandler = e=>{ e.preventDefault(); const ids=els('input[type="checkbox"]:checked',attachList).map(c=>c.dataset.id); if(!ids.length){dlgAttach.close(); return;} if(attachCtx.type==='person'){ const p=store.people[attachCtx.personId]; const arr=(p[attachCtx.side] ||= []); ids.forEach(id=>{ if(!arr.includes(id)) arr.push(id); recomputeTodoPeople(id); }); save(); dlgAttach.close(); renderPeople(); renderTodos(); } else if(attachCtx.type==='kanban'){ ids.forEach(id=>moveInKanban(id, attachCtx.colId)); dlgAttach.close(); } };
+el('#btnAttachConfirm').onclick=attachConfirmHandler;
+// Add Enter key handler for Attach modal
+el('#dlgAttach').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    attachConfirmHandler(e);
+  }
+});
 
 /*** ====== COMMAND PALETTE ====== ***/
 const kbar=el('#kbar'), kinput=el('#kinput'), klist=el('#klist');
