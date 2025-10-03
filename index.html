@@ -60,7 +60,9 @@
     border:1px solid var(--border);background:var(--card);border-radius:10px;padding:4px 6px;
     display:grid;gap:6px;align-items:center;
     grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px) 44px;
+    cursor:pointer;transition:background-color 0.15s ease;
   }
+  .todoRow:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc))}
   .todoHeader{
     border:1px solid var(--border);background:var(--panel);border-radius:10px;padding:6px 6px;
     display:grid;gap:6px;align-items:center;
@@ -445,6 +447,15 @@ function renderTodos(){
     if(e.target.dataset.act==='openModal'){ openTodoModal(id); }
     if(e.target.dataset.act==='toggle'){
       const k=e.target.dataset.k; const t=store.todos[e.target.closest('.hiu').dataset.id]; t.eisen=t.eisen||{impact:0,important:0,urgent:0}; t.eisen[k]=t.eisen[k]?0:1; save(); renderTodos();
+    }
+    
+    // If clicking on a todo row but not on any specific control element, open the modal
+    const todoRow = e.target.closest('.todoRow');
+    if (todoRow && !e.target.dataset.act && !e.target.closest('select, input, button, .hiu .d')) {
+      const todoId = todoRow.dataset.id;
+      if (todoId) {
+        openTodoModal(todoId);
+      }
     }
   };
   // inline title edit
