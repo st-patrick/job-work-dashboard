@@ -327,7 +327,7 @@
 const LS_KEY='jwdm_v1';
 const demoData=()=>({
   meta:{version:3,lastId:100},
-  current:{tab:'todos',sort:'due-asc',activeKanbanId:'kb1'},
+  current:{tab:'todos',sort:'due-asc',activeKanbanId:'default'},
   todos:{
     1:{id:'1',title:'Finalize wireframes',notes:'Homepage + pricing',projectId:'p1',people:[],tags:['design'],due:dateStrOffset(2),created:Date.now()-86400000*2,status:'in-progress',eisen:{impact:1,important:1,urgent:0}},
     2:{id:'2',title:'API auth flow',notes:'Add refresh tokens',projectId:'p1',people:['a'],tags:['api','security'],due:dateStrOffset(5),created:Date.now()-86400000*3,status:'todo',eisen:{impact:1,important:0,urgent:1}},
@@ -555,34 +555,71 @@ function renderPeople(){
 /*** ====== KANBAN ====== ***/
 const kbSelect=el('#kbSelect'), kbProject=el('#kbProject'), kanbanGrid=el('#kanbanGrid');
 el('#btnAddBoard').onclick=()=>{ const name=prompt('Board name?'); if(!name) return; const id='kb'+nextId(); store.kanbans[id]={id,name,columns:[{id:'col-'+nextId(),name:'Backlog',todoIds:[]}]}; store.current.activeKanbanId=id; save(); renderKanban(); };
-kbSelect.onchange=()=>{store.current.activeKanbanId=kbSelect.value; save(); renderKanban();};
+kbSelect.onchange=()=>{store.current.activeKanbanId=kbSelect.value; save(); updateBoardControls(); renderKanban();};
 kbProject.onchange=()=>renderKanban();
 
 el('#btnEditBoard').onclick=()=>openBoardEditor();
 
+function updateBoardControls() {
+  const isDefaultBoard = store.current.activeKanbanId === 'default';
+  el('#btnEditBoard').style.display = isDefaultBoard ? 'none' : '';
+}
+
 let pendingPlacement=null;
 
 function renderKanban(){
-  const boards=Object.values(store.kanbans); if(!boards.length){kbSelect.innerHTML=''; kanbanGrid.innerHTML='<div class="note">No boards yet. Create one with ＋.</div>'; return;}
-  kbSelect.innerHTML=boards.map(k=>`<option value="${k.id}" ${store.current.activeKanbanId===k.id?'selected':''}>${k.name}</option>`).join('');
-  if(!store.current.activeKanbanId){store.current.activeKanbanId=boards[0].id; save();}
+  const boards=Object.values(store.kanbans);
+  const allBoards = [{id:'default', name:'Default (By Status)'}].concat(boards);
+  
+  kbSelect.innerHTML=allBoards.map(k=>`<option value="${k.id}" ${store.current.activeKanbanId===k.id?'selected':''}>${k.name}</option>`).join('');
+  if(!store.current.activeKanbanId){store.current.activeKanbanId='default'; save();}
   kbProject.innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
 
-  const kb=store.kanbans[store.current.activeKanbanId]; const filterProj=kbProject.value;
-  kanbanGrid.innerHTML=kb.columns.map(col=>{
-    const cards=col.todoIds.map(id=>store.todos[id]).filter(Boolean).filter(t=>!filterProj||t.projectId===filterProj).map(t=>kanbanCard(t)).join('');
-    return `<div class="column" data-col="${col.id}">
-      <div class="colhead">
-        <span contenteditable="true" spellcheck="false" data-act="renameCol" data-col="${col.id}" title="Click to rename">${col.name}</span>
-        <div class="coltools">
-          <button class="pill action" data-col="${col.id}" data-act="attachToCol" title="Attach existing">＋</button>
-          <button class="pill action" data-col="${col.id}" data-act="newToCol" title="New todo here">✚</button>
-          <button class="pill" data-col="${col.id}" data-act="deleteCol" title="Delete column">🗑</button>
+  const filterProj=kbProject.value;
+  const isDefaultBoard = store.current.activeKanbanId === 'default';
+  
+  if (isDefaultBoard) {
+    // Special handling for the default board - show todos by status
+    const statusColumns = [
+      {id: 'todo', name: 'Todo', status: 'todo'},
+      {id: 'in-progress', name: 'In Progress', status: 'in-progress'},
+      {id: 'review', name: 'Review', status: 'review'},
+      {id: 'done', name: 'Done', status: 'done'}
+    ];
+    
+    kanbanGrid.innerHTML = statusColumns.map(col => {
+      const todos = Object.values(store.todos).filter(t => t.status === col.status && (!filterProj || t.projectId === filterProj));
+      const cards = todos.map(t => kanbanCard(t)).join('');
+      return `<div class="column" data-col="${col.id}">
+        <div class="colhead">
+          <span>${col.name}</span>
+          <div class="coltools">
+            <span class="badge">${todos.length}</span>
+          </div>
         </div>
-      </div>
-      <div class="dropzone" data-col="${col.id}">${cards||'<div class="note">Drop here…</div>'}</div>
-    </div>`;
-  }).join('');
+        <div class="dropzone" data-col="${col.id}">${cards || '<div class="note">No todos here…</div>'}</div>
+      </div>`;
+    }).join('');
+  } else {
+    // Regular board handling
+    const kb=store.kanbans[store.current.activeKanbanId];
+    if (!kb) return;
+    
+    kanbanGrid.innerHTML=kb.columns.map(col=>{
+      const cards=col.todoIds.map(id=>store.todos[id]).filter(Boolean).filter(t=>!filterProj||t.projectId===filterProj).map(t=>kanbanCard(t)).join('');
+      return `<div class="column" data-col="${col.id}">
+        <div class="colhead">
+          <span contenteditable="true" spellcheck="false" data-act="renameCol" data-col="${col.id}" title="Click to rename">${col.name}</span>
+          <div class="coltools">
+            <button class="pill action" data-col="${col.id}" data-act="attachToCol" title="Attach existing">＋</button>
+            <button class="pill action" data-col="${col.id}" data-act="newToCol" title="New todo here">✚</button>
+            <button class="pill" data-col="${col.id}" data-act="deleteCol" title="Delete column">🗑</button>
+          </div>
+        </div>
+        <div class="dropzone" data-col="${col.id}">${cards||'<div class="note">Drop here…</div>'}</div>
+      </div>`;
+    }).join('');
+  }
 
   els('.card[kb]').forEach(c=>{ c.draggable=true; c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',c.dataset.id); c.classList.add('dragging'); ev.dataTransfer.effectAllowed='move';}); c.addEventListener('dragend',()=>c.classList.remove('dragging')); });
   els('.dropzone').forEach(z=>{ z.addEventListener('dragover',ev=>{ev.preventDefault(); z.classList.add('over');}); z.addEventListener('dragleave',()=>z.classList.remove('over')); z.addEventListener('drop',ev=>{ev.preventDefault(); z.classList.remove('over'); const todoId=ev.dataTransfer.getData('text/plain'); moveInKanban(todoId,z.dataset.col);}); });
@@ -593,12 +630,45 @@ function renderKanban(){
 
   // delete column button
   kanbanGrid.addEventListener('click', (e)=>{ if(e.target.dataset.act==='deleteCol'){ const colId=e.target.dataset.col; const kb=store.kanbans[store.current.activeKanbanId]; if(kb.columns.length<=1) return alert('Need at least one column'); const i=kb.columns.findIndex(c=>c.id===colId); if(i>=0){ kb.columns.splice(i,1); save(); renderKanban(); } } });
+  
+  updateBoardControls();
 }
 function kanbanCard(t){ const p=store.projects[t.projectId]; return `<div class="card" kb data-id="${t.id}"><div class="cardhead"><div class="cardtitle tiny">${t.title}</div><button class="iconbtn" title="Edit" data-act="edit" data-id="${t.id}">✏️</button></div><div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span><span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div></div>`; }
-function moveInKanban(todoId,toColId){ const kb=store.kanbans[store.current.activeKanbanId]; kb.columns.forEach(c=>{const i=c.todoIds.indexOf(todoId); if(i>=0) c.todoIds.splice(i,1);}); const tgt=kb.columns.find(c=>c.id===toColId); if(tgt && !tgt.todoIds.includes(todoId)) tgt.todoIds.unshift(todoId); save(); renderKanban(); }
-kanbanGrid.addEventListener('click',e=>{ if(e.target.dataset.act==='edit') openTodoModal(e.target.dataset.id); if(e.target.dataset.act==='attachToCol'){ openAttachModal({type:'kanban', boardId:store.current.activeKanbanId, colId:e.target.dataset.col}); } if(e.target.dataset.act==='newToCol'){ pendingPlacement={boardId:store.current.activeKanbanId, colId:e.target.dataset.col}; openTodoModal(); } });
+function moveInKanban(todoId,toColId){ 
+  const isDefaultBoard = store.current.activeKanbanId === 'default';
+  
+  if (isDefaultBoard) {
+    // For default board, update the todo's status
+    const statusMap = {'todo': 'todo', 'in-progress': 'in-progress', 'review': 'review', 'done': 'done'};
+    if (statusMap[toColId] && store.todos[todoId]) {
+      store.todos[todoId].status = statusMap[toColId];
+      save();
+      renderKanban();
+      renderTodos(); // Also update todos view since status changed
+    }
+  } else {
+    // Regular board handling
+    const kb=store.kanbans[store.current.activeKanbanId]; 
+    kb.columns.forEach(c=>{const i=c.todoIds.indexOf(todoId); if(i>=0) c.todoIds.splice(i,1);}); 
+    const tgt=kb.columns.find(c=>c.id===toColId); 
+    if(tgt && !tgt.todoIds.includes(todoId)) tgt.todoIds.unshift(todoId); 
+    save(); 
+    renderKanban();
+  }
+}
+kanbanGrid.addEventListener('click',e=>{ 
+  if(e.target.dataset.act==='edit') openTodoModal(e.target.dataset.id); 
+  
+  // Disable these actions for default board
+  if (store.current.activeKanbanId !== 'default') {
+    if(e.target.dataset.act==='attachToCol'){ openAttachModal({type:'kanban', boardId:store.current.activeKanbanId, colId:e.target.dataset.col}); } 
+    if(e.target.dataset.act==='newToCol'){ pendingPlacement={boardId:store.current.activeKanbanId, colId:e.target.dataset.col}; openTodoModal(); }
+  }
+});
 
-function openBoardEditor(){ const kb=store.kanbans[store.current.activeKanbanId]; if(!kb) return; el('#bName').value=kb.name; const holder=el('#bCols'); holder.innerHTML = kb.columns.map(c=> `<div class="row" data-col="${c.id}"><div><input type="text" value="${c.name}" data-act="colName"></div><div><button class="pill" data-act="colUp">↑</button> <button class="pill" data-act="colDown">↓</button> <button class="pill" data-act="colDel">🗑</button></div></div>`).join(''); el('#dlgBoard').showModal();
+function openBoardEditor(){ 
+  if (store.current.activeKanbanId === 'default') return; // Can't edit default board
+  const kb=store.kanbans[store.current.activeKanbanId]; if(!kb) return; el('#bName').value=kb.name; const holder=el('#bCols'); holder.innerHTML = kb.columns.map(c=> `<div class="row" data-col="${c.id}"><div><input type="text" value="${c.name}" data-act="colName"></div><div><button class="pill" data-act="colUp">↑</button> <button class="pill" data-act="colDown">↓</button> <button class="pill" data-act="colDel">🗑</button></div></div>`).join(''); el('#dlgBoard').showModal();
 }
 el('#btnAddCol').onclick=()=>{ const kb=store.kanbans[store.current.activeKanbanId]; const id='col-'+nextId(); kb.columns.push({id,name:'New Column',todoIds:[]}); save(); openBoardEditor(); };
 const saveBoardHandler = (e)=>{ e.preventDefault(); const kb=store.kanbans[store.current.activeKanbanId]; kb.name = el('#bName').value.trim()||kb.name; // names
