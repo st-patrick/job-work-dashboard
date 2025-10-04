@@ -89,6 +89,8 @@
 
   .list{display:grid;gap:10px;margin-top:12px}
   .card{border:1px solid var(--border);background:var(--card);border-radius:14px;padding:12px;display:grid;gap:6px}
+  .card[data-pid]{cursor:pointer;transition:background-color 0.15s ease}
+  .card[data-pid]:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc))}
   .cardhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
   .cardtitle{font-weight:700}
   .inline-list{font-size:12px;color:var(--muted)}
@@ -479,7 +481,7 @@ function renderProjects(){
   projectList.innerHTML=Object.values(store.projects).map(p=>{
     const todos=(p.todoIds||[]).map(id=>store.todos[id]).filter(Boolean);
     const inline = todos.map((t,i)=>`<span class="item"><span class="link" data-act="open" data-id="${t.id}">${t.title}</span></span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
-    return `<div class="card">
+    return `<div class="card" data-pid="${p.id}">
       <div class="cardhead">
         <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> ${p.name}</div>
         <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
@@ -487,7 +489,22 @@ function renderProjects(){
       <div class="inline-list">${inline || '<span class="note">No todos yet.</span>'}</div>
     </div>`;
   }).join('');
-  projectList.onclick=e=>{ if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid); if(e.target.dataset.act==='open') openTodoModal(e.target.dataset.id); };
+  projectList.onclick=e=>{ 
+    if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid); 
+    if(e.target.dataset.act==='open') openTodoModal(e.target.dataset.id); 
+    
+    // If clicking on a project card but not on any specific control element, view the project
+    const projectCard = e.target.closest('.card[data-pid]');
+    if (projectCard && !e.target.dataset.act && !e.target.closest('button, .link[data-act="open"]')) {
+      const projectId = projectCard.dataset.pid;
+      if (projectId) {
+        // Switch to todos view and filter by this project
+        setTab('todos');
+        fProject.value = projectId;
+        renderTodos();
+      }
+    }
+  };
 }
 
 /*** ====== PEOPLE VIEW ====== ***/
