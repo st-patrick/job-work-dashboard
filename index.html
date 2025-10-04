@@ -59,14 +59,14 @@
   .todoRow{
     border:1px solid var(--border);background:var(--card);border-radius:10px;padding:4px 6px;
     display:grid;gap:6px;align-items:center;
-    grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px) 44px;
+    grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px);
     cursor:pointer;transition:background-color 0.15s ease;
   }
   .todoRow:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc))}
   .todoHeader{
     border:1px solid var(--border);background:var(--panel);border-radius:10px;padding:6px 6px;
     display:grid;gap:6px;align-items:center;
-    grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px) 44px;
+    grid-template-columns: 98px 1fr 64px minmax(120px,180px) minmax(132px,160px);
     font-weight:600;font-size:12px;color:var(--muted);
   }
   .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:4px}
@@ -417,7 +417,6 @@ function renderTodos(){
     <div>Priority</div>
     <div>Project</div>
     <div>Due Date</div>
-    <div>Actions</div>
   </div>`;
 
   todoList.innerHTML=headerRow + items.map(t=>{
@@ -432,9 +431,9 @@ function renderTodos(){
         <span class="d i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-      <div class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
-      <input type="date" class="badge" style="padding:4px 8px;border-radius:8px;min-width:128px" value="${t.due||''}" data-act="setDue" data-id="${t.id}">
-      <div class="actions"><button class="iconbtn" data-act="openModal" data-id="${t.id}" title="Open details">✏️</button></div>
+      <div style="display:flex;align-items:center;gap:6px"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
+      <div class="link" style="padding:4px 8px;border-radius:8px;min-width:128px;background:var(--card);cursor:pointer" data-act="openModal" data-id="${t.id}" title="Click to edit todo">${t.due ? fmtDue(t.due) : '—'}</div>
+      <div class="actions"></div>
     </div>`;
   }).join('');
 
@@ -442,7 +441,6 @@ function renderTodos(){
   todoList.onchange=e=>{
     const id=e.target.dataset.id; if(!id) return;
     if(e.target.dataset.act==='setStatus'){store.todos[id].status=e.target.value; save(); renderTodos();}
-    if(e.target.dataset.act==='setDue'){store.todos[id].due=e.target.value; save(); renderTodos();}
   };
   todoList.onclick=e=>{
     const id=e.target.dataset.id;
