@@ -810,6 +810,24 @@ el('#dlgDeleteProject').addEventListener('keydown', e => {
 function recomputeTodoPeople(todoId){const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id); const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];}
 function renderPeople(){
   peopleList.innerHTML=Object.values(store.people).map(p=>{
+    const waitingForMe = p.waitingForMe || [];
+    const waitingForThem = p.waitingForThem || [];
+    const hasTasks = waitingForMe.length > 0 || waitingForThem.length > 0;
+    
+    if (!hasTasks) {
+      // Compact view when no tasks
+      return `<div class="card">
+        <div class="cardhead">
+          <div class="cardtitle" title="${p.id}"><span class="pill" style="background:${pColor(p)};color:#000;border-color:transparent">${p.initials}</span> ${p.name}</div>
+          <div class="coltools">
+            <button class="iconbtn action" data-pid="${p.id}" data-act="addWithPerson" title="New todo for ${p.name}">＋</button>
+            <button class="pill action" data-pid="${p.id}" data-side="waitingForMe" data-act="openAttach" style="font-size:11px;padding:2px 6px">Attach</button>
+          </div>
+        </div>
+        <div style="padding:4px 0;color:var(--muted);font-size:12px">No tasks assigned</div>
+      </div>`;
+    }
+    
     const listHtml=(arr,side)=> (arr||[]).map(tid=>{const t=store.todos[tid]; if(!t) return ''; return `<span class="pill" data-pid="${p.id}" data-side="${side}" data-tid="${tid}"><span class="link" data-act="open" data-id="${tid}">${t.title}</span>${t.due?` · ${fmtDue(t.due)}`:''} <button class="xbtn" title="Remove">×</button></span>`;}).join('') || '<span class="note">—</span>';
     return `<div class="card">
       <div class="cardhead">
