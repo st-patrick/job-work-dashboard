@@ -70,6 +70,7 @@
     font-weight:600;font-size:12px;color:var(--muted);
   }
   .todoRow .statusSel{width:100%;font-size:12px;border-radius:8px;padding:4px}
+  .todoRow .projectSel{width:100%;font-size:12px;border-radius:8px;padding:4px}
   .todoRow .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
   .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
   .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
@@ -231,8 +232,10 @@
     <div><label>Tags (comma separated)</label><input type="text" id="tTags" placeholder="design, api, review"></div>
     <div><label>Notes</label><textarea id="tNotes" rows="3" placeholder="Optional details…"></textarea></div>
     <div class="row">
-      <div><label>I’m waiting on… (multi-select)</label><select id="selWaitingOn" multiple size="6"></select></div>
-      <div><label>They’re waiting on me… (multi-select)</label><select id="selWaitingOnMe" multiple size="6"></select></div>
+      <div><label>I’m waiting on… (multi-select)</label><select id="selWaitingOn" multiple size="6"></select>
+        <div class="tiny muted" style="margin-top:4px">💡 Ctrl+click to deselect items · <button type="button" id="btnClearWaitingOn" style="background:none;border:none;color:var(--acc);cursor:pointer;font-size:11px">Clear all</button></div></div>
+      <div><label>They’re waiting on me… (multi-select)</label><select id="selWaitingOnMe" multiple size="6"></select>
+        <div class="tiny muted" style="margin-top:4px">💡 Ctrl+click to deselect items · <button type="button" id="btnClearWaitingOnMe" style="background:none;border:none;color:var(--acc);cursor:pointer;font-size:11px">Clear all</button></div></div>
     </div>
     <div class="toolbar" style="justify-content:space-between">
       <button id="btnDeleteTodo" type="button" class="pill" style="background:var(--bad);color:#fff;border-color:transparent;display:none">🗑 Delete</button>
@@ -522,7 +525,10 @@ function renderTodos(){
         <span class="d i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-      <div style="display:flex;align-items:center;gap:6px"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'No project'}</div>
+      <select class="projectSel" data-act="setProject" data-id="${t.id}" style="font-size:12px;border-radius:8px;padding:4px 8px;min-width:120px;background:var(--card);border:1px solid var(--border)">
+        <option value="">(No project)</option>
+        ${Object.values(store.projects).map(proj => `<option value="${proj.id}" ${t.projectId === proj.id ? 'selected' : ''}>${proj.name}</option>`).join('')}
+      </select>
       <div class="link" style="padding:4px 8px;border-radius:8px;min-width:128px;background:var(--card);cursor:pointer" data-act="openModal" data-id="${t.id}" title="Click to edit todo">${t.due ? fmtDue(t.due) : '—'}</div>
       <div class="actions"></div>
     </div>`;
@@ -532,6 +538,33 @@ function renderTodos(){
   todoList.onchange=e=>{
     const id=e.target.dataset.id; if(!id) return;
     if(e.target.dataset.act==='setStatus'){store.todos[id].status=e.target.value; save(); renderTodos();}
+    if(e.target.dataset.act==='setProject'){
+      const oldProjectId = store.todos[id].projectId;
+      const newProjectId = e.target.value;
+      
+      // Update todo's project
+      store.todos[id].projectId = newProjectId;
+      
+      // Remove from old project
+      if(oldProjectId && store.projects[oldProjectId]) {
+        const oldProject = store.projects[oldProjectId];
+        oldProject.todoIds = (oldProject.todoIds || []).filter(tid => tid !== id);
+      }
+      
+      // Add to new project
+      if(newProjectId && store.projects[newProjectId]) {
+        const newProject = store.projects[newProjectId];
+        if(!newProject.todoIds) newProject.todoIds = [];
+        if(!newProject.todoIds.includes(id)) {
+          newProject.todoIds.push(id);
+        }
+      }
+      
+      save(); 
+      renderTodos();
+      renderProjects(); // Update project view to reflect changes
+      renderKanban(); // Update kanban view in case todos moved
+    }
   };
   todoList.onclick=e=>{
     const id=e.target.dataset.id;
@@ -952,6 +985,15 @@ function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.sel
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
 const saveTodoHandler = e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now() }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
 el('#btnSaveTodo').onclick=saveTodoHandler;
+
+// Clear multi-select handlers
+el('#btnClearWaitingOn').onclick = () => {
+  Array.from(el('#selWaitingOn').options).forEach(option => option.selected = false);
+};
+
+el('#btnClearWaitingOnMe').onclick = () => {
+  Array.from(el('#selWaitingOnMe').options).forEach(option => option.selected = false);
+};
 
 // Delete todo handler
 el('#btnDeleteTodo').onclick = e => {
