@@ -1,5 +1,3 @@
-Let's get a header / legend row on the todos table / list
-
 add a (no one) option to the waiting on multi select in task edit because it seems you cannt unselect all trivially.
 
 the people view could be more compact. on XL / large desktop, we can have a 2-column-grid showing the people instead of just one column

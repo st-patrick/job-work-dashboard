@@ -74,6 +74,7 @@
   .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
   .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
   .todoRow .actions{display:flex;gap:6px;justify-content:flex-end}
+  
   @media (max-width:900px){ 
     .todoRow{grid-template-columns:1fr} 
     .todoRow .actions{justify-content:flex-start}
@@ -91,6 +92,8 @@
   .card{border:1px solid var(--border);background:var(--card);border-radius:14px;padding:12px;display:grid;gap:6px}
   .card[data-pid]{cursor:pointer;transition:background-color 0.15s ease}
   .card[data-pid]:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc))}
+  .card[kb]{transition:background-color 0.15s ease, transform 0.15s ease}
+  .card[kb]:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc));transform:translateY(-1px)}
   .cardhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
   .cardtitle{font-weight:700}
   .inline-list{font-size:12px;color:var(--muted)}
@@ -231,9 +234,12 @@
       <div><label>I’m waiting on… (multi-select)</label><select id="selWaitingOn" multiple size="6"></select></div>
       <div><label>They’re waiting on me… (multi-select)</label><select id="selWaitingOnMe" multiple size="6"></select></div>
     </div>
-    <div class="toolbar" style="justify-content:flex-end">
-      <button value="cancel" class="pill">Cancel</button>
-      <button id="btnSaveTodo" value="default" class="pill action">Save</button>
+    <div class="toolbar" style="justify-content:space-between">
+      <button id="btnDeleteTodo" type="button" class="pill" style="background:var(--bad);color:#fff;border-color:transparent;display:none">🗑 Delete</button>
+      <div style="display:flex;gap:8px">
+        <button value="cancel" class="pill">Cancel</button>
+        <button id="btnSaveTodo" value="default" class="pill action">Save</button>
+      </div>
     </div>
     <input type="hidden" id="tId">
   </form>
@@ -355,6 +361,42 @@ let store=load();
 function load(){try{const raw=localStorage.getItem(LS_KEY);if(!raw){const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}return JSON.parse(raw);}catch(e){console.error(e);const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}}
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(store));}
 function nextId(){store.meta.lastId++;return String(store.meta.lastId);} 
+
+function deleteTodo(id) {
+  if (!id || !store.todos[id]) return false;
+  
+  // Remove from todos
+  delete store.todos[id];
+  
+  // Remove from projects
+  Object.values(store.projects).forEach(p => {
+    if (p.todoIds?.includes(id)) {
+      p.todoIds = p.todoIds.filter(tid => tid !== id);
+    }
+  });
+  
+  // Remove from people waiting lists
+  Object.values(store.people).forEach(p => {
+    if (p.waitingForMe?.includes(id)) {
+      p.waitingForMe = p.waitingForMe.filter(tid => tid !== id);
+    }
+    if (p.waitingForThem?.includes(id)) {
+      p.waitingForThem = p.waitingForThem.filter(tid => tid !== id);
+    }
+  });
+  
+  // Remove from kanban columns
+  Object.values(store.kanbans).forEach(kb => {
+    kb.columns.forEach(col => {
+      if (col.todoIds?.includes(id)) {
+        col.todoIds = col.todoIds.filter(tid => tid !== id);
+      }
+    });
+  });
+  
+  save();
+  return true;
+}
 
 /*** ====== HELPERS ====== ***/
 const el=(q,r=document)=>r.querySelector(q), els=(q,r=document)=>Array.from(r.querySelectorAll(q));
@@ -631,7 +673,7 @@ function renderKanban(){
   
   updateBoardControls();
 }
-function kanbanCard(t){ const p=store.projects[t.projectId]; return `<div class="card" kb data-id="${t.id}"><div class="cardhead"><div class="cardtitle tiny">${t.title}</div><button class="iconbtn" title="Edit" data-act="edit" data-id="${t.id}">✏️</button></div><div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span><span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div></div>`; }
+function kanbanCard(t){ const p=store.projects[t.projectId]; return `<div class="card" kb data-id="${t.id}" data-act="openModal" style="cursor:pointer" title="Click to edit todo"><div class="cardhead"><div class="cardtitle tiny">${t.title}</div></div><div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span><span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div></div>`; }
 function moveInKanban(todoId,toColId){ 
   const isDefaultBoard = store.current.activeKanbanId === 'default';
   
@@ -655,7 +697,15 @@ function moveInKanban(todoId,toColId){
   }
 }
 kanbanGrid.addEventListener('click',e=>{ 
-  if(e.target.dataset.act==='edit') openTodoModal(e.target.dataset.id); 
+  if(e.target.dataset.act==='edit' || e.target.dataset.act==='openModal') {
+    openTodoModal(e.target.dataset.id); 
+  }
+  
+  // Check if clicked element is a kanban card or inside one
+  const cardElement = e.target.closest('[kb]');
+  if(cardElement && cardElement.dataset.id && !e.target.closest('button')) {
+    openTodoModal(cardElement.dataset.id);
+  }
   
   // Disable these actions for default board
   if (store.current.activeKanbanId !== 'default') {
@@ -690,13 +740,49 @@ const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#
 el('#fabAdd').onclick=()=>openTodoModal();
 function setEisenUI(e){ els('.d', eisenForm).forEach(b=>{ const k=b.dataset.k; b.classList.toggle('on', !!e[k]); }); }
 eisenForm.addEventListener('click', (ev)=>{ const btn=ev.target.closest('.d'); if(!btn) return; btn.classList.toggle('on'); });
-function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){ refreshProjectSelects(); refreshPeopleSelects(); if(id){ const t=store.todos[id]; tId.value=t.id; tTitle.value=t.title||''; tNotes.value=t.notes||''; tProject.value=t.projectId||''; tDue.value=t.due||''; tStatus.value=t.status||'todo'; const waitingOnIds=Object.values(store.people).filter(p=>p.waitingForMe?.includes(id)).map(p=>p.id); const waitingOnMeIds=Object.values(store.people).filter(p=>p.waitingForThem?.includes(id)).map(p=>p.id); setMultiSel(selWaitingOn,new Set(waitingOnIds)); setMultiSel(selWaitingOnMe,new Set(waitingOnMeIds)); setEisenUI(t.eisen||{impact:0,important:0,urgent:0}); el('#todoFormTitle').textContent='Edit Todo'; }else{ tId.value=''; el('#todoForm').reset(); tProject.value=presetProjectId||''; setMultiSel(selWaitingOn,new Set(presetPersonId?[presetPersonId]:[])); setMultiSel(selWaitingOnMe,new Set()); setEisenUI({impact:0,important:0,urgent:0}); el('#todoFormTitle').textContent='New Todo'; } dlgTodo.showModal(); }
+function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){ 
+  refreshProjectSelects(); refreshPeopleSelects(); 
+  if(id){ 
+    const t=store.todos[id]; 
+    tId.value=t.id; tTitle.value=t.title||''; tNotes.value=t.notes||''; tProject.value=t.projectId||''; tDue.value=t.due||''; tStatus.value=t.status||'todo'; 
+    const waitingOnIds=Object.values(store.people).filter(p=>p.waitingForMe?.includes(id)).map(p=>p.id); 
+    const waitingOnMeIds=Object.values(store.people).filter(p=>p.waitingForThem?.includes(id)).map(p=>p.id); 
+    setMultiSel(selWaitingOn,new Set(waitingOnIds)); setMultiSel(selWaitingOnMe,new Set(waitingOnMeIds)); 
+    setEisenUI(t.eisen||{impact:0,important:0,urgent:0}); 
+    el('#todoFormTitle').textContent='Edit Todo'; 
+    el('#btnDeleteTodo').style.display='block';
+  }else{ 
+    tId.value=''; el('#todoForm').reset(); tProject.value=presetProjectId||''; 
+    setMultiSel(selWaitingOn,new Set(presetPersonId?[presetPersonId]:[])); setMultiSel(selWaitingOnMe,new Set()); 
+    setEisenUI({impact:0,important:0,urgent:0}); 
+    el('#todoFormTitle').textContent='New Todo'; 
+    el('#btnDeleteTodo').style.display='none';
+  } 
+  dlgTodo.showModal(); 
+}
 function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); tProject.innerHTML=opts; el('#aProject').innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#kbProject').innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; fPerson.innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
 const saveTodoHandler = e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now() }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
 el('#btnSaveTodo').onclick=saveTodoHandler;
+
+// Delete todo handler
+el('#btnDeleteTodo').onclick = e => {
+  e.preventDefault();
+  const id = tId.value;
+  if (!id) return;
+  
+  const todo = store.todos[id];
+  const confirmMsg = `Are you sure you want to delete "${todo?.title || 'this todo'}"?\n\nThis action cannot be undone.`;
+  
+  if (confirm(confirmMsg)) {
+    deleteTodo(id);
+    dlgTodo.close();
+    render(true);
+  }
+};
+
 // Add Enter key handler for Todo modal
 dlgTodo.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
@@ -765,7 +851,9 @@ kinput.addEventListener('keydown',(e)=>{ const items=Array.from(klist.children);
 
 /*** ====== INIT & RENDER ====== ***/
 function render(){ els('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===store.current.tab)); views.forEach(id=>el('#view-'+id).classList.toggle('hidden',store.current.tab!==id)); renderTodos(); renderProjects(); renderPeople(); renderKanban(); }
+
 render();
 </script>
+
 </body>
 </html>
