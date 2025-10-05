@@ -74,6 +74,8 @@
   .todoRow .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
   .todoRow .title[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px}
   .todoRow .title:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
+  .project-name[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px;display:inline-block}
+  .project-name:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
   .todoRow .actions{display:flex;gap:6px;justify-content:flex-end}
   
   @media (max-width:900px){ 
@@ -605,7 +607,7 @@ function renderProjects(){
     const inline = todos.map((t,i)=>`<span class="item"><span class="link" data-act="open" data-id="${t.id}">${t.title}</span></span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
     return `<div class="card" data-pid="${p.id}">
       <div class="cardhead">
-        <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> ${p.name}</div>
+        <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> <span class="project-name" contenteditable="true" spellcheck="false" data-act="editProjectName" data-pid="${p.id}" title="Click to edit project name">${p.name}</span></div>
         <div style="display:flex;gap:6px">
           <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
           <button class="iconbtn" data-pid="${p.id}" data-act="deleteProject" title="Delete project" style="background:var(--bad);color:#fff;border-color:transparent">🗑</button>
@@ -621,7 +623,7 @@ function renderProjects(){
     
     // If clicking on a project card but not on any specific control element, view the project
     const projectCard = e.target.closest('.card[data-pid]');
-    if (projectCard && !e.target.dataset.act && !e.target.closest('button, .link[data-act="open"]')) {
+    if (projectCard && !e.target.dataset.act && !e.target.closest('button, .link[data-act="open"], .project-name')) {
       const projectId = projectCard.dataset.pid;
       if (projectId) {
         // Switch to todos view and filter by this project
@@ -631,6 +633,33 @@ function renderProjects(){
       }
     }
   };
+  
+  // Inline project name editing
+  projectList.addEventListener('keydown', (e) => {
+    if (e.target.dataset.act === 'editProjectName' && e.key === 'Enter') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+  
+  projectList.addEventListener('blur', (e) => {
+    if (e.target.dataset.act === 'editProjectName') {
+      const projectId = e.target.dataset.pid;
+      const newName = e.target.textContent.trim();
+      
+      if (newName && store.projects[projectId]) {
+        store.projects[projectId].name = newName;
+        save();
+        renderProjects();
+        renderTodos(); // Update project dropdowns in todo rows
+        renderKanban(); // Update kanban view project names
+        refreshProjectSelects(); // Update project selects in modals
+      } else if (!newName) {
+        // Revert to original name if empty
+        renderProjects();
+      }
+    }
+  }, true);
 }
 
 /*** ====== PEOPLE VIEW ====== ***/
