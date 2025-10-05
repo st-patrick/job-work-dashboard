@@ -320,6 +320,55 @@
   </form>
 </dialog>
 
+<!-- MODAL: DELETE PROJECT -->
+<dialog id="dlgDeleteProject">
+  <form method="dialog" class="modal" id="deleteProjectForm">
+    <h3>Delete Project</h3>
+    <div style="margin-bottom:16px">
+      <div style="padding:12px;background:color-mix(in oklab,var(--warn) 10%,transparent);border:1px solid color-mix(in oklab,var(--warn) 30%,transparent);border-radius:12px;margin-bottom:12px">
+        <strong>⚠️ Warning:</strong> You are about to delete "<span id="deleteProjectName"></span>".
+      </div>
+      <p style="margin:8px 0">What should happen to the <strong><span id="deleteTodoCount"></span></strong> assigned to this project?</p>
+      
+      <div style="margin:12px 0">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="radio" name="deleteMode" value="unassign" checked>
+          <span><strong>Unassign todos</strong> (recommended)<br><small class="muted">Todos will remain but be unassigned from this project</small></span>
+        </label>
+      </div>
+      
+      <div style="margin:12px 0">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="radio" name="deleteMode" value="reassign" id="reassignRadio">
+          <span><strong>Reassign to another project</strong><br><small class="muted">Move all todos to a different project</small></span>
+        </label>
+        <div style="margin-top:8px;margin-left:32px" id="reassignProjectContainer">
+          <select id="reassignProjectSelect" style="width:100%" disabled>
+            <option value="">Select target project...</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Collapsible dangerous option -->
+      <details style="margin-top:16px">
+        <summary style="cursor:pointer;color:var(--bad);font-size:12px;padding:4px 0">⚠️ Show destructive option</summary>
+        <div style="margin-top:8px;padding:12px;background:color-mix(in oklab,var(--bad) 8%,transparent);border:1px solid color-mix(in oklab,var(--bad) 30%,transparent);border-radius:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="radio" name="deleteMode" value="deleteTodos">
+            <span style="color:var(--bad)"><strong>Delete all todos in this project</strong><br><small>⚠️ This action cannot be undone!</small></span>
+          </label>
+        </div>
+      </details>
+    </div>
+    
+    <div class="toolbar" style="justify-content:space-between">
+      <button value="cancel" class="pill">Cancel</button>
+      <button id="btnConfirmDeleteProject" value="default" class="pill" style="background:var(--bad);color:#fff;border-color:transparent">Delete Project</button>
+    </div>
+    <input type="hidden" id="deleteProjectId">
+  </form>
+</dialog>
+
 <!-- COMMAND PALETTE -->
 <div class="kbar" id="kbar" aria-hidden="true">
   <div class="kpanel">
@@ -524,7 +573,10 @@ function renderProjects(){
     return `<div class="card" data-pid="${p.id}">
       <div class="cardhead">
         <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> ${p.name}</div>
-        <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
+        <div style="display:flex;gap:6px">
+          <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
+          <button class="iconbtn" data-pid="${p.id}" data-act="deleteProject" title="Delete project" style="background:var(--bad);color:#fff;border-color:transparent">🗑</button>
+        </div>
       </div>
       <div class="inline-list">${inline || '<span class="note">No todos yet.</span>'}</div>
     </div>`;
@@ -532,6 +584,7 @@ function renderProjects(){
   projectList.onclick=e=>{ 
     if(e.target.dataset.act==='addToProject') openTodoModal(null,e.target.dataset.pid); 
     if(e.target.dataset.act==='open') openTodoModal(e.target.dataset.id); 
+    if(e.target.dataset.act==='deleteProject') openDeleteProjectModal(e.target.dataset.pid);
     
     // If clicking on a project card but not on any specific control element, view the project
     const projectCard = e.target.closest('.card[data-pid]');
@@ -557,6 +610,139 @@ el('#dlgPerson').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     savePersonHandler(e);
+  }
+});
+
+function openDeleteProjectModal(projectId) {
+  const project = store.projects[projectId];
+  if (!project) return;
+  
+  const todoIds = project.todoIds || [];
+  const todoCount = todoIds.length;
+  
+  el('#deleteProjectId').value = projectId;
+  el('#deleteProjectName').textContent = project.name;
+  el('#deleteTodoCount').textContent = todoCount === 0 ? 'no todos' : 
+    todoCount === 1 ? '1 todo' : `${todoCount} todos`;
+  
+  // Populate reassign dropdown with other projects
+  const reassignSelect = el('#reassignProjectSelect');
+  const otherProjects = Object.values(store.projects).filter(p => p.id !== projectId);
+  reassignSelect.innerHTML = '<option value="">Select target project...</option>' +
+    otherProjects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  
+  // Reset form to default (unassign)
+  el('input[name="deleteMode"][value="unassign"]').checked = true;
+  reassignSelect.disabled = true;
+  
+  // Hide reassign option if no other projects exist
+  const reassignContainer = el('#reassignProjectContainer').closest('div');
+  reassignContainer.style.display = otherProjects.length > 0 ? 'block' : 'none';
+  
+  el('#dlgDeleteProject').showModal();
+}
+
+function deleteProject(projectId, mode, targetProjectId = null) {
+  const project = store.projects[projectId];
+  if (!project) return false;
+  
+  const todoIds = project.todoIds || [];
+  
+  if (mode === 'deleteTodos') {
+    // Delete all todos in this project
+    todoIds.forEach(todoId => {
+      deleteTodo(todoId);
+    });
+  } else if (mode === 'reassign' && targetProjectId) {
+    // Reassign todos to another project
+    const targetProject = store.projects[targetProjectId];
+    if (!targetProject) return false;
+    
+    todoIds.forEach(todoId => {
+      if (store.todos[todoId]) {
+        store.todos[todoId].projectId = targetProjectId;
+        // Add to target project's todo list
+        if (!targetProject.todoIds.includes(todoId)) {
+          targetProject.todoIds.push(todoId);
+        }
+      }
+    });
+  } else {
+    // Unassign todos from project
+    todoIds.forEach(todoId => {
+      if (store.todos[todoId]) {
+        store.todos[todoId].projectId = '';
+      }
+    });
+  }
+  
+  // Delete the project itself
+  delete store.projects[projectId];
+  
+  save();
+  return true;
+}
+
+const deleteProjectHandler = e => {
+  e.preventDefault();
+  const projectId = el('#deleteProjectId').value;
+  const mode = el('input[name="deleteMode"]:checked').value;
+  const targetProjectId = el('#reassignProjectSelect').value;
+  
+  const project = store.projects[projectId];
+  const todoCount = (project?.todoIds || []).length;
+  
+  // Validation for reassign mode
+  if (mode === 'reassign' && !targetProjectId) {
+    alert('Please select a target project to reassign todos to.');
+    return;
+  }
+  
+  let confirmMsg;
+  if (mode === 'deleteTodos') {
+    confirmMsg = `Are you sure you want to delete "${project.name}" and permanently delete all ${todoCount} todos?\n\nThis action cannot be undone!`;
+  } else if (mode === 'reassign') {
+    const targetProject = store.projects[targetProjectId];
+    confirmMsg = `Delete "${project.name}" and move ${todoCount} todos to "${targetProject.name}"?`;
+  } else {
+    confirmMsg = `Delete "${project.name}"?\n\n${todoCount > 0 ? `${todoCount} todos will be unassigned but kept.` : 'No todos to unassign.'}`;
+  }
+  
+  if (confirm(confirmMsg)) {
+    if (deleteProject(projectId, mode, targetProjectId)) {
+      el('#dlgDeleteProject').close();
+      renderProjects();
+      renderTodos();
+      renderKanban();
+      
+      // Clear project filter if it was set to the deleted project
+      if (fProject.value === projectId) {
+        fProject.value = '';
+        renderTodos();
+      }
+    }
+  }
+};
+
+el('#btnConfirmDeleteProject').onclick = deleteProjectHandler;
+
+// Handle radio button changes for delete mode
+el('#dlgDeleteProject').addEventListener('change', e => {
+  if (e.target.name === 'deleteMode') {
+    const reassignSelect = el('#reassignProjectSelect');
+    const isReassign = e.target.value === 'reassign';
+    reassignSelect.disabled = !isReassign;
+    if (!isReassign) {
+      reassignSelect.value = '';
+    }
+  }
+});
+
+// Add Enter key handler for Delete Project modal  
+el('#dlgDeleteProject').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    deleteProjectHandler(e);
   }
 });
 function recomputeTodoPeople(todoId){const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id); const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];}
