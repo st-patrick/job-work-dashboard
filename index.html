@@ -817,7 +817,20 @@ el('#dlgDeleteProject').addEventListener('keydown', e => {
 });
 function recomputeTodoPeople(todoId){const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id); const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];}
 function renderPeople(){
-  peopleList.innerHTML=Object.values(store.people).map(p=>{
+  // Sort people: most tasks first, no tasks last
+  const sortedPeople = Object.values(store.people).sort((a, b) => {
+    const aTotal = (a.waitingForMe?.length || 0) + (a.waitingForThem?.length || 0);
+    const bTotal = (b.waitingForMe?.length || 0) + (b.waitingForThem?.length || 0);
+    
+    // If one has tasks and the other doesn't, prioritize the one with tasks
+    if (aTotal === 0 && bTotal > 0) return 1;
+    if (bTotal === 0 && aTotal > 0) return -1;
+    
+    // If both have tasks or both have no tasks, sort by total count (descending)
+    return bTotal - aTotal;
+  });
+  
+  peopleList.innerHTML=sortedPeople.map(p=>{
     const waitingForMe = p.waitingForMe || [];
     const waitingForThem = p.waitingForThem || [];
     const totalTasks = waitingForMe.length + waitingForThem.length;
