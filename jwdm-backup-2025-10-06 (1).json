@@ -1,0 +1,2445 @@
+{
+  "meta": {
+    "version": 3,
+    "lastId": 223
+  },
+  "current": {
+    "tab": "people",
+    "sort": "due-asc",
+    "activeKanbanId": "default"
+  },
+  "todos": {
+    "101": {
+      "id": "101",
+      "title": "Hotelbuchung 02. und 03. Dezember und Fahrt/Flug",
+      "notes": "",
+      "projectId": "p9",
+      "people": [],
+      "tags": [
+        "travel"
+      ],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "102": {
+      "id": "102",
+      "title": "Academy Bahn",
+      "notes": "",
+      "projectId": "p9",
+      "people": [],
+      "tags": [
+        "travel"
+      ],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "103": {
+      "id": "103",
+      "title": "Features Ideen FIS App Vortrag Berlin",
+      "notes": "Oberpunkt für Feature-Ideen zum FIS Vortrag in Berlin",
+      "projectId": "p2",
+      "people": [],
+      "tags": [
+        "FIS"
+      ],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "104": {
+      "id": "104",
+      "title": "Sofortzahlung (Feature-Idee)",
+      "notes": "Unterpunkt zu: Features Ideen FIS App Vortrag Berlin",
+      "projectId": "p2",
+      "people": [],
+      "tags": [
+        "FIS",
+        "feature"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "105": {
+      "id": "105",
+      "title": "AI Assistant Zahlung (Feature-Idee)",
+      "notes": "Unterpunkt zu: Features Ideen FIS App Vortrag Berlin",
+      "projectId": "p2",
+      "people": [],
+      "tags": [
+        "FIS",
+        "feature",
+        "AI"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "106": {
+      "id": "106",
+      "title": "Update OpenProject",
+      "notes": "",
+      "projectId": "p7",
+      "people": [],
+      "tags": [
+        "openproject"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "107": {
+      "id": "107",
+      "title": "Filter über Screen hinaus (siehe Telefon Elmar)",
+      "notes": "",
+      "projectId": "p215",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "108": {
+      "id": "108",
+      "title": "Expo Upgrade to 54",
+      "notes": "",
+      "projectId": "p215",
+      "people": [],
+      "tags": [
+        "expo"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "110": {
+      "id": "110",
+      "title": "Work dashboard prototype",
+      "notes": "Aus 'Waiting for me' → ohne externe Person referenziert",
+      "projectId": "p219",
+      "people": [
+        "pr223"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "111": {
+      "id": "111",
+      "title": "Form builder prototype",
+      "notes": "Aus 'Waiting for me' → ohne externe Person referenziert",
+      "projectId": "p220",
+      "people": [
+        "pr223",
+        "torsten"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "112": {
+      "id": "112",
+      "title": "leading",
+      "notes": "Waiting for me → Erik wartet auf mich",
+      "projectId": "p217",
+      "people": [
+        "erik",
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "113": {
+      "id": "113",
+      "title": "2in1 Integration",
+      "notes": "Waiting for me → Erik wartet auf mich",
+      "projectId": "p4",
+      "people": [
+        "erik"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "114": {
+      "id": "114",
+      "title": "OpenProject aktualisieren",
+      "notes": "Waiting for me → Marcus wartet auf mich",
+      "projectId": "p7",
+      "people": [
+        "marcus"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "115": {
+      "id": "115",
+      "title": "Vortrag Academy",
+      "notes": "Waiting for me → Mark & Andy warten auf mich",
+      "projectId": "p219",
+      "people": [
+        "mark",
+        "andy"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "2025-11-20",
+      "status": "todo",
+      "created": 0
+    },
+    "116": {
+      "id": "116",
+      "title": "Hackathon compilation",
+      "notes": "Waiting for me → Mark & Andy warten auf mich",
+      "projectId": "p219",
+      "people": [
+        "mark",
+        "andy"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "2025-10-09",
+      "status": "todo",
+      "created": 0
+    },
+    "117": {
+      "id": "117",
+      "title": "Konzept: Wie Form Builder bauen",
+      "notes": "Stefan Böltl: EIS/Middleware. Durairaj Venkatraman: builds core24 mit Torsten/Jens. Anurjay: Architekt (Link coreTS, Bindeglied core↔webUI/common components).",
+      "projectId": "p1",
+      "people": [
+        "torsten"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "118": {
+      "id": "118",
+      "title": "TestFlight Build (custom IPs) & Android: FIS CA zu trusted root CAs",
+      "notes": "",
+      "projectId": "p1",
+      "people": [
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "119": {
+      "id": "119",
+      "title": "PW reset",
+      "notes": "",
+      "projectId": "p3",
+      "people": [
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "120": {
+      "id": "120",
+      "title": "FinanceLife & 2FA Finish Line (low-key)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [
+        "thomas"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "121": {
+      "id": "121",
+      "title": "Develop Build ohne CDN-Dependencies",
+      "notes": "",
+      "projectId": "p1",
+      "people": [
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "122": {
+      "id": "122",
+      "title": "Mit SSL Pinning",
+      "notes": "",
+      "projectId": "p1",
+      "people": [
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "123": {
+      "id": "123",
+      "title": "PW reset Build",
+      "notes": "",
+      "projectId": "p3",
+      "people": [
+        "ugur"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "in-progress",
+      "created": 0
+    },
+    "129": {
+      "id": "129",
+      "title": "FIS Manual ersetzen/updaten (was genau?)",
+      "notes": "Waiting for → ich warte auf sie",
+      "projectId": "p2",
+      "people": [
+        "sylvia",
+        "jochen"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "131": {
+      "id": "131",
+      "title": "München: FIS-Besuch in Person",
+      "notes": "Waiting for",
+      "projectId": "p2",
+      "people": [
+        "sylvia"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "132": {
+      "id": "132",
+      "title": "Berlin: FIS Mobile App Vortrag (bankenfachverband e.V.)",
+      "notes": "Waiting for",
+      "projectId": "p2",
+      "people": [],
+      "tags": [
+        "FIS",
+        "vortrag",
+        "berlin"
+      ],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "134": {
+      "id": "134",
+      "title": "PW Reset — Alternative Auth End-Unit (PLZ/Geburtsdatum) → temporärer Token oder Fehler",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "pw-reset",
+        "auth"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "135": {
+      "id": "135",
+      "title": "PW Reset — PW_RESET_IDENT Challenge",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "pw-reset",
+        "challenge"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "136": {
+      "id": "136",
+      "title": "PW Reset — Token Reuse: zuerst checkOnly=true",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "pw-reset",
+        "token"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "137": {
+      "id": "137",
+      "title": "PW Reset — Token Reuse: dann ohne checkOnly",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "pw-reset",
+        "token"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "138": {
+      "id": "138",
+      "title": "PW Reset — /auth/customer/pw/reset liefert challengeId",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "pw-reset",
+        "api"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "139": {
+      "id": "139",
+      "title": "Todos in Code sammeln/schreiben",
+      "notes": "",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "141": {
+      "id": "141",
+      "title": "Update OpenProject",
+      "notes": "Duplikat bewusst als wiederkehrend",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "142": {
+      "id": "142",
+      "title": "2FA/AGB/PW-Reset Specs gegen Umsetzung prüfen",
+      "notes": "",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "143": {
+      "id": "143",
+      "title": "Fresh Designs: Allrounder Banking App",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "design",
+        "recurring"
+      ],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "144": {
+      "id": "144",
+      "title": "Dokumentation schreiben",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "docs",
+        "recurring"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "145": {
+      "id": "145",
+      "title": "Remove logs before delivery",
+      "notes": "",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "146": {
+      "id": "146",
+      "title": "Layout auf verschiedenen Devices testen",
+      "notes": "Different screen size emulators",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 1,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "147": {
+      "id": "147",
+      "title": "Zeiten fakturieren",
+      "notes": "",
+      "projectId": "p217",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "148": {
+      "id": "148",
+      "title": "(API) Error Handling & Edge Cases",
+      "notes": "",
+      "projectId": "p218",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "149": {
+      "id": "149",
+      "title": "API Spec Update implementieren",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "api",
+        "spec"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "150": {
+      "id": "150",
+      "title": "Layout-Design auf kleinsten Android prüfen",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "android",
+        "layout"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "151": {
+      "id": "151",
+      "title": "Who is Jens Klusmeyer?",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "research"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "152": {
+      "id": "152",
+      "title": "Write roadmap.md for FinanceLife",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "financelife",
+        "docs"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "153": {
+      "id": "153",
+      "title": "Andere offene Tickets in OpenProject",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "wd",
+        "openproject"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "154": {
+      "id": "154",
+      "title": "Done-Button Tickets (siehe OpenProject)",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "openproject",
+        "wd"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "155": {
+      "id": "155",
+      "title": "Schönheitsfehler",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "wd",
+        "polish"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "156": {
+      "id": "156",
+      "title": "Hwd 2FA Deliverable — Gesamt",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "deliverable"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "157": {
+      "id": "157",
+      "title": "2FA Deliverable — Regelmeetings (falls nötig)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "meetings"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "158": {
+      "id": "158",
+      "title": "2FA Deliverable — Embedded Version fertig (Design Issues)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "embedded",
+        "design"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "159": {
+      "id": "159",
+      "title": "2FA Deliverable — Standalone Version (für Stellantis)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "standalone",
+        "stellantis"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "160": {
+      "id": "160",
+      "title": "2FA Doku — intern: Wie funktioniert Kobil",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "docs",
+        "kobil"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "161": {
+      "id": "161",
+      "title": "2FA Doku — für FIS: was ist fertig / wo finden / was fehlt",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "docs",
+        "FIS"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "162": {
+      "id": "162",
+      "title": "2FA Doku — Confluence-Specs abgleichen (was da/was nicht)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "docs",
+        "confluence"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "163": {
+      "id": "163",
+      "title": "OpenProject updaten — aktueller Stand",
+      "notes": "Unter 2FA-Deliverable erledigt",
+      "projectId": "p7",
+      "people": [],
+      "tags": [
+        "2FA",
+        "openproject"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "164": {
+      "id": "164",
+      "title": "OpenProject mit 2FA-Specs abgleichen",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "openproject",
+        "specs"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "165": {
+      "id": "165",
+      "title": "2FA Deliverable iOS — Standalone",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "iOS",
+        "standalone"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "166": {
+      "id": "166",
+      "title": "2FA Deliverable iOS — Accounts anlegen (Smart Dashboard)",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "iOS",
+        "accounts"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "167": {
+      "id": "167",
+      "title": "2FA Deliverable iOS — Offline-User an Kobil-Testbackend anbinden",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "2FA",
+        "iOS",
+        "kobil",
+        "offline"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "168": {
+      "id": "168",
+      "title": "Android Page Size Update",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "android"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "169": {
+      "id": "169",
+      "title": "Security Topics — Special Screen: URL-Konfiguration (Ugur) für Umgebungswechsel",
+      "notes": "",
+      "projectId": "p1",
+      "people": [
+        "ugur"
+      ],
+      "tags": [
+        "security",
+        "config"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "170": {
+      "id": "170",
+      "title": "Security Topics — Session Refresh / JWT 15m; Backend liefert Session Refresh",
+      "notes": "Call auth/token mit demselben Token als Refresh",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "security",
+        "auth"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "171": {
+      "id": "171",
+      "title": "Account Numbers verschlüsseln (Account ID & encapsulated ID) → verschlüsselte Account-Nummer übergeben",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "security",
+        "encryption"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "172": {
+      "id": "172",
+      "title": "HW — Technische Anforderungen",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "specs"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "173": {
+      "id": "173",
+      "title": "Theming: Unified Source (Colors/Sizes) + Theme-Switch out-of-the-box",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "wd",
+        "theming"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "174": {
+      "id": "174",
+      "title": "Terms nicht akzeptabel — Bedingungen definieren",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "wd",
+        "terms"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "175": {
+      "id": "175",
+      "title": "Screen /new-terms/index wenn AGB nicht zustimmbar",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "wd",
+        "terms",
+        "ui"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "176": {
+      "id": "176",
+      "title": "Zugang entsperren — Case CR PW Reset",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "wd",
+        "pw-reset",
+        "case"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "177": {
+      "id": "177",
+      "title": "3 Fehlversuche — Case CR PW Reset",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [
+        "wd",
+        "pw-reset",
+        "edgecase"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 1
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "178": {
+      "id": "178",
+      "title": "Blocked: AGB & PW Reset CRs",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "w",
+        "blocked",
+        "AGB",
+        "pw-reset"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "179": {
+      "id": "179",
+      "title": "README: public void onCatalystInstanceDestroy() — evtl. Duplicate Certs?",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "w",
+        "react-native",
+        "certs"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "180": {
+      "id": "180",
+      "title": "Tickets in OpenProject anlegen (2FA CR)",
+      "notes": "",
+      "projectId": "p7",
+      "people": [],
+      "tags": [
+        "w",
+        "openproject",
+        "2FA"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "181": {
+      "id": "181",
+      "title": "Biometrics PW speichern → PW am Desktop ändern → Verhalten beim Mobile-Login prüfen",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "w",
+        "biometrics",
+        "edgecase"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "182": {
+      "id": "182",
+      "title": "Maestro Tests",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "w",
+        "testing",
+        "maestro"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "183": {
+      "id": "183",
+      "title": "Vorführtermin CR AGB & PW Reset",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [
+        "w",
+        "2FA",
+        "AGB",
+        "pw-reset",
+        "demo"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "184": {
+      "id": "184",
+      "title": "2FA Screens: Fehlerfälle (abgebrochen / anderer Fehler) abfangen",
+      "notes": "",
+      "projectId": "p4",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "185": {
+      "id": "185",
+      "title": "PW Reset CR: \"Neues PW = altes PW\"-Fall",
+      "notes": "",
+      "projectId": "p3",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "186": {
+      "id": "186",
+      "title": "Upgrade to Expo 53",
+      "notes": "",
+      "projectId": "p215",
+      "people": [],
+      "tags": [
+        "w",
+        "expo"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "187": {
+      "id": "187",
+      "title": "UX/Perf: Simple object + store + Context API + Fetch kombinieren",
+      "notes": "",
+      "projectId": "p1",
+      "people": [],
+      "tags": [
+        "w",
+        "architecture",
+        "ux"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "188": {
+      "id": "188",
+      "title": "Rollenunterscheidung Terms & Conditions (Account-Holder nicht akzeptiert",
+      "notes": "In Accounts List oder separater Endpoint?",
+      "projectId": "p1",
+      "people": [],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 1,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "189": {
+      "id": "189",
+      "title": "Whitelabel Screens — Umsetzung (Gesamt)",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "190": {
+      "id": "190",
+      "title": "EAS Cloud — Provisioning Profile & Dist Cert downloaden",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "build"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "191": {
+      "id": "191",
+      "title": "Ultrasimple Styled Components (H3/H1/B/…) programmatisch generieren?",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "design-system"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "192": {
+      "id": "192",
+      "title": "Strings nach translations.js (i18n) verschieben (ongoing)",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "i18n"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "193": {
+      "id": "193",
+      "title": "Dev-Builds: Warning-Popups fixen",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "dev"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "194": {
+      "id": "194",
+      "title": "Landscape ScrollView Problem lösen",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "layout"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "195": {
+      "id": "195",
+      "title": "Ein Review/2FA/Success Component vereinheitlichen",
+      "notes": "Entweder parametrisiert nutzen oder Single-File Entrypoints",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "2FA",
+        "components"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "196": {
+      "id": "196",
+      "title": "OpenProject Wiki (Technisches Zeug) in README.md migrieren",
+      "notes": "https://openproject.syngenio.info/projects/fordapp/wiki/technisches-zeug-fur-die-coder-aka-readme-dot-txt",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "docs",
+        "openproject"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "197": {
+      "id": "197",
+      "title": "Screen \"Security-App Bestätigung\": Abstand Headline/Subheadline angleichen",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "ui"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "198": {
+      "id": "198",
+      "title": "Build-Pipeline mit Lukas aufsetzen",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "build"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "199": {
+      "id": "199",
+      "title": "Login als Dropdown (Test-User) statt normalem Login",
+      "notes": "Testing vereinfachen",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "testing",
+        "login"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "200": {
+      "id": "200",
+      "title": "Navigation Tree (Screenshots + Linien/Graph)",
+      "notes": "Flow visualisieren",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "architecture",
+        "docs"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "201": {
+      "id": "201",
+      "title": "Business-Logic Doku für die App",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "docs",
+        "business-logic"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "202": {
+      "id": "202",
+      "title": "Offline-User randomisieren / generieren",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "testing",
+        "offline"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "203": {
+      "id": "203",
+      "title": "Einheitliche Lade-Indikatoren/Position/Wording (Input von Ann Louis)",
+      "notes": "",
+      "projectId": "p5",
+      "people": [
+        "ann_louis"
+      ],
+      "tags": [
+        "whitelabel",
+        "ux"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "204": {
+      "id": "204",
+      "title": "Repository auf FinanceLife umbenennen (yadda yadda, Branch Ford etc.)",
+      "notes": "",
+      "projectId": "p5",
+      "people": [],
+      "tags": [
+        "whitelabel",
+        "repo"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "done",
+      "created": 0
+    },
+    "205": {
+      "id": "205",
+      "title": "Next App — Success Handling vereinheitlichen (inkl. Fehlerfälle 4xx/5xx)",
+      "notes": "Und Screens normalisieren",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "success-handling"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "206": {
+      "id": "206",
+      "title": "Next App — authToken immer aus SecureStore holen (nicht aus Context)",
+      "notes": "Schon implementiertes Speichern nutzen",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "auth",
+        "securestore"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "207": {
+      "id": "207",
+      "title": "Next App — 2FA Polling: 2s → 100ms → 1s (adaptive)",
+      "notes": "",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "2FA",
+        "polling"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "208": {
+      "id": "208",
+      "title": "Next App — Masked View für FlatList/ScrollView Fade",
+      "notes": "https://jainsameer.medium.com/react-native-faded-flatlist-over-background-image-9651f38ad31c",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "ui"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "209": {
+      "id": "209",
+      "title": "Next App — Bessere Parameter-Übergabe (globales Objekt pro Prozess)",
+      "notes": "z.B. newTransaction { amount, memo, … }",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "architecture"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "210": {
+      "id": "210",
+      "title": "Next App — iOS Swipe-from-Left zum Zurücknavigieren",
+      "notes": "",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "ios",
+        "nav"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "211": {
+      "id": "211",
+      "title": "Next App — Zusätzliche Validation/Sanitization von User-Inputs (Mobile)",
+      "notes": "",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "validation"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "212": {
+      "id": "212",
+      "title": "Next App — Logout-Timer in höchstes Layout legen",
+      "notes": "",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "session"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "213": {
+      "id": "213",
+      "title": "Next App — Landscape: Bottom Nav springt beim Wechseln",
+      "notes": "",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "layout",
+        "android/ios"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "214": {
+      "id": "214",
+      "title": "Next App — SecureStore: Alles on-change speichern + 1-Min Cache-Reads",
+      "notes": "Direkter Login, Daten-Update nach Login",
+      "projectId": "p6",
+      "people": [],
+      "tags": [
+        "next-app",
+        "securestore",
+        "cache"
+      ],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 0
+    },
+    "216": {
+      "id": "216",
+      "title": "ensure I have challenging work",
+      "notes": "",
+      "projectId": "p218",
+      "people": [
+        "thomas"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "",
+      "status": "todo",
+      "created": 1759673359261
+    },
+    "222": {
+      "id": "222",
+      "title": "deepen codebase understanding for CSS refactor",
+      "notes": "",
+      "projectId": "",
+      "people": [
+        "ij221"
+      ],
+      "tags": [],
+      "eisen": {
+        "impact": 0,
+        "important": 0,
+        "urgent": 0
+      },
+      "due": "2025-10-06",
+      "status": "todo",
+      "created": 1759734676958
+    }
+  },
+  "projects": {
+    "p1": {
+      "id": "p1",
+      "name": "Inbox",
+      "color": "#e5e7eb",
+      "todoIds": [
+        "117",
+        "118",
+        "121",
+        "122",
+        "149",
+        "150",
+        "151",
+        "153",
+        "154",
+        "155",
+        "168",
+        "169",
+        "170",
+        "171",
+        "172",
+        "173",
+        "174",
+        "175",
+        "178",
+        "179",
+        "181",
+        "182",
+        "187",
+        "188",
+        "143",
+        "144",
+        "152"
+      ]
+    },
+    "p2": {
+      "id": "p2",
+      "name": "FIS App",
+      "color": "#ffd36b",
+      "todoIds": [
+        "103",
+        "104",
+        "105",
+        "129",
+        "131",
+        "132"
+      ]
+    },
+    "p3": {
+      "id": "p3",
+      "name": "PW Reset",
+      "color": "#fca5a5",
+      "todoIds": [
+        "119",
+        "123",
+        "134",
+        "135",
+        "136",
+        "137",
+        "138",
+        "176",
+        "177",
+        "185"
+      ]
+    },
+    "p4": {
+      "id": "p4",
+      "name": "2FA integration",
+      "color": "#7cc9ff",
+      "todoIds": [
+        "120",
+        "156",
+        "157",
+        "158",
+        "159",
+        "160",
+        "161",
+        "162",
+        "164",
+        "165",
+        "166",
+        "167",
+        "183",
+        "184",
+        "113"
+      ]
+    },
+    "p5": {
+      "id": "p5",
+      "name": "Whitelabel",
+      "color": "#a7f3d0",
+      "todoIds": [
+        "189",
+        "190",
+        "191",
+        "192",
+        "193",
+        "194",
+        "195",
+        "196",
+        "197",
+        "198",
+        "199",
+        "200",
+        "201",
+        "202",
+        "203",
+        "204"
+      ]
+    },
+    "p6": {
+      "id": "p6",
+      "name": "Next App",
+      "color": "#93c5fd",
+      "todoIds": [
+        "205",
+        "206",
+        "207",
+        "208",
+        "209",
+        "210",
+        "211",
+        "212",
+        "213",
+        "214"
+      ]
+    },
+    "p7": {
+      "id": "p7",
+      "name": "OpenProject",
+      "color": "#fecaca",
+      "todoIds": [
+        "106",
+        "114",
+        "163",
+        "180"
+      ]
+    },
+    "p9": {
+      "id": "p9",
+      "name": "Travel",
+      "color": "#fde68a",
+      "todoIds": [
+        "101",
+        "102"
+      ]
+    },
+    "p215": {
+      "id": "p215",
+      "name": "Ford Bank App",
+      "color": "#0071c2",
+      "todoIds": [
+        "108",
+        "186",
+        "107"
+      ]
+    },
+    "p217": {
+      "id": "p217",
+      "name": "Recurring",
+      "color": "#e33535",
+      "todoIds": [
+        "112",
+        "141",
+        "139",
+        "142",
+        "145",
+        "146",
+        "147"
+      ]
+    },
+    "p218": {
+      "id": "p218",
+      "name": "revisit",
+      "color": "#b36b79",
+      "todoIds": [
+        "148",
+        "216"
+      ]
+    },
+    "p219": {
+      "id": "p219",
+      "name": "Personal / Meta",
+      "color": "#7cc9ff",
+      "todoIds": [
+        "110",
+        "116",
+        "115"
+      ]
+    },
+    "p220": {
+      "id": "p220",
+      "name": "FIS forms redesign frontend",
+      "color": "#83afaa",
+      "todoIds": [
+        "111"
+      ]
+    }
+  },
+  "people": {
+    "erik": {
+      "id": "erik",
+      "name": "Erik",
+      "initials": "ER",
+      "waitingForMe": [],
+      "waitingForThem": [
+        "113",
+        "112"
+      ]
+    },
+    "marcus": {
+      "id": "marcus",
+      "name": "Marcus",
+      "initials": "MA",
+      "waitingForMe": [],
+      "waitingForThem": [
+        "114"
+      ]
+    },
+    "mark": {
+      "id": "mark",
+      "name": "Mark",
+      "initials": "MK",
+      "waitingForMe": [
+        "115"
+      ],
+      "waitingForThem": [
+        "116"
+      ]
+    },
+    "andy": {
+      "id": "andy",
+      "name": "Andy",
+      "initials": "AN",
+      "waitingForMe": [
+        "115"
+      ],
+      "waitingForThem": [
+        "116"
+      ]
+    },
+    "torsten": {
+      "id": "torsten",
+      "name": "Torsten (Jens StrumpfPapapetrou)",
+      "initials": "TO",
+      "waitingForMe": [],
+      "waitingForThem": [
+        "117",
+        "111"
+      ]
+    },
+    "stefan_boeltl": {
+      "id": "stefan_boeltl",
+      "name": "Stefan Böltl",
+      "initials": "SB",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "durairaj": {
+      "id": "durairaj",
+      "name": "Durairaj Venkatraman",
+      "initials": "DV",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "anurjay": {
+      "id": "anurjay",
+      "name": "Anurjay",
+      "initials": "AJ",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "ugur": {
+      "id": "ugur",
+      "name": "Ugur",
+      "initials": "UG",
+      "waitingForMe": [],
+      "waitingForThem": [
+        "169",
+        "118",
+        "119",
+        "121",
+        "122",
+        "123",
+        "112"
+      ]
+    },
+    "thomas": {
+      "id": "thomas",
+      "name": "Thomas",
+      "initials": "TH",
+      "waitingForMe": [
+        "216"
+      ],
+      "waitingForThem": [
+        "120"
+      ]
+    },
+    "oliver": {
+      "id": "oliver",
+      "name": "Oliver",
+      "initials": "OL",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "bettina": {
+      "id": "bettina",
+      "name": "Bettina",
+      "initials": "BE",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "sylvia": {
+      "id": "sylvia",
+      "name": "Sylvia",
+      "initials": "SY",
+      "waitingForMe": [
+        "129",
+        "131"
+      ],
+      "waitingForThem": []
+    },
+    "reinhold": {
+      "id": "reinhold",
+      "name": "Reinhold",
+      "initials": "RE",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "florian_nadine": {
+      "id": "florian_nadine",
+      "name": "Florian / Nadine",
+      "initials": "FN",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "jochen": {
+      "id": "jochen",
+      "name": "Jochen",
+      "initials": "JO",
+      "waitingForMe": [
+        "129"
+      ],
+      "waitingForThem": []
+    },
+    "lukas": {
+      "id": "lukas",
+      "name": "Lukas",
+      "initials": "LU",
+      "waitingForMe": [],
+      "waitingForThem": []
+    },
+    "ann_louis": {
+      "id": "ann_louis",
+      "name": "Ann Louis",
+      "initials": "AL",
+      "waitingForMe": [],
+      "waitingForThem": [
+        "203"
+      ]
+    },
+    "ij221": {
+      "id": "ij221",
+      "name": "Irudayaraj",
+      "initials": "IJ",
+      "waitingForMe": [
+        "222"
+      ],
+      "waitingForThem": [
+        "222"
+      ]
+    },
+    "pr223": {
+      "id": "pr223",
+      "name": "Patrick (me)",
+      "initials": "PR",
+      "waitingForMe": [
+        "110",
+        "111"
+      ],
+      "waitingForThem": [
+        "110",
+        "111"
+      ]
+    }
+  },
+  "kanbans": {
+    "kb1": {
+      "id": "kb1",
+      "name": "Imported",
+      "columns": [
+        {
+          "id": "col-backlog",
+          "name": "Backlog",
+          "todoIds": []
+        },
+        {
+          "id": "col-progress",
+          "name": "In Progress",
+          "todoIds": []
+        },
+        {
+          "id": "col-review",
+          "name": "Review",
+          "todoIds": []
+        },
+        {
+          "id": "col-done",
+          "name": "Done",
+          "todoIds": []
+        }
+      ]
+    }
+  }
+}
