@@ -104,10 +104,38 @@
     border:1px solid var(--border);background:var(--card);color:var(--fg);
     font-size:15px;font-weight:var(--font-weight-regular);
     transition:all 0.2s var(--transition);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   }
+  
+  /* Custom select styling for Safari and all browsers */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 44px;
+    cursor: pointer;
+  }
+  
+  /* Dark mode select arrow */
+  @media (prefers-color-scheme: dark) {
+    select, .todoRow .statusSel, .todoRow .projectSel {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398989d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    }
+  }
+  
   select:focus,input:focus,textarea:focus{
     outline:none;border-color:var(--acc);
     box-shadow:0 0 0 4px color-mix(in oklab,var(--acc) 15%,transparent);
+  }
+  
+  /* Enhanced select hover state */
+  select:hover {
+    border-color:color-mix(in oklab,var(--acc) 40%,transparent);
+    background-color:color-mix(in oklab,var(--card) 96%,var(--acc));
   }
   label{
     font-size:13px;color:var(--muted);display:block;margin-bottom:8px;
@@ -125,6 +153,7 @@
     font-size:13px;padding:6px 12px;border-radius:16px;
     border:1px solid var(--border);background:var(--panel);
     font-weight:var(--font-weight-medium);
+    font-family: inherit;
   }
   .status-todo{background:color-mix(in oklab,var(--muted) 8%,transparent)}
   .status-in-progress{background:color-mix(in oklab,var(--acc) 12%,transparent);color:var(--acc)}
@@ -168,15 +197,35 @@
   }
   .todoRow .statusSel{
     width:100%;font-size:13px;border-radius:10px;padding:8px 12px;
-    font-weight:var(--font-weight-medium);
+    font-weight:var(--font-weight-regular) !important;
     border:1px solid var(--border);background:var(--panel);
     transition:all 0.2s var(--transition);
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3c/polyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    padding-right: 28px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif !important;
   }
   .todoRow .projectSel{
     width:100%;font-size:13px;border-radius:10px;padding:8px 12px;
     font-weight:var(--font-weight-medium);
     border:1px solid var(--border);background:var(--panel);
     transition:all 0.2s var(--transition);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    padding-right: 28px;
+    cursor: pointer;
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   }
   .todoRow .title{
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
