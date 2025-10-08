@@ -179,7 +179,7 @@
     background:var(--card);
     border-radius:14px;
     padding:12px 16px;display:grid;gap:12px;align-items:center;
-    grid-template-columns: 120px 1fr 80px minmax(140px,200px) minmax(140px,180px);
+    grid-template-columns: 60px 1fr 100px 100px 100px;
     cursor:pointer;transition:all 0.3s var(--transition);
     border:1px solid transparent;
     box-shadow:var(--shadow-medium) transparent;
@@ -193,8 +193,8 @@
   .todoHeader{
     border-bottom:1px solid var(--border);background:var(--panel);
     padding:12px 16px;display:grid;gap:12px;align-items:center;
-    grid-template-columns: 120px 1fr 80px minmax(140px,200px) minmax(140px,180px);
-    font-weight:var(--font-weight-semibold);font-size:13px;color:var(--muted);
+    grid-template-columns: 60px 1fr 100px 100px 100px;
+    font-size:13px;color:var(--muted);
   }
   .todoRow .statusSel{
     width:100%;font-size:13px;border-radius:10px;padding:8px 12px;
@@ -228,10 +228,17 @@
     cursor: pointer;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   }
+  .title-cell{
+    display:flex;align-items:center;
+  }
+  
   .todoRow .title{
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     font-weight:var(--font-weight-semibold);font-size:15px;
     line-height:1.4;
+    display:inline-block;
+    min-width:fit-content;
+    cursor:text;
   }
   .todoRow .title[contenteditable="true"]{
     outline:2px solid transparent;border-radius:8px;padding:4px 8px;
@@ -241,6 +248,13 @@
     outline:2px solid var(--acc);
     background:color-mix(in oklab,var(--acc) 8%, transparent);
     box-shadow:0 0 0 4px color-mix(in oklab,var(--acc) 15%,transparent);
+  }
+  
+  .meta-text{
+    font-size:13px;
+    color:var(--muted);
+    font-weight:var(--font-weight-regular);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .project-name[contenteditable="true"]{outline:2px dashed transparent;border-radius:6px;padding:2px 4px;display:inline-block}
   .project-name:focus{outline:2px dashed var(--acc);background:color-mix(in oklab,var(--acc) 8%, transparent)}
@@ -256,28 +270,55 @@
     .wrap{padding:clamp(8px,2vw,16px)}
     .panel{margin-top:16px;padding:16px;border-radius:16px}
     .fab{width:56px;height:56px;right:16px;bottom:16px;font-size:28px}
+    
+    /* Mobile layout for todo items */
+    .todoRow .meta-text{
+      font-size:12px;
+      margin:2px 0;
+    }
+    .title-cell{
+      order:-1;
+      margin-bottom:8px;
+    }
   }
 
-  /* HIU strip - refined */
-  .hiu{display:inline-grid;grid-auto-flow:column;gap:6px;align-items:center}
+  /* HIU color code - compact portrait bars */
+  .hiu{
+    display:inline-flex;
+    align-items:center;
+    gap:0;
+  }
   .hiu .d{
-    width:16px;height:16px;border-radius:6px;
-    border:2px solid var(--border);background:var(--panel);display:block;
-    transition:all 0.3s var(--transition);cursor:pointer;
+    width:12px;
+    height:18px;
+    border:none;
+    background:var(--border);
+    display:block;
+    transition:all 0.2s var(--transition);
+    cursor:pointer;
     position:relative;
   }
-  .hiu .d:hover{transform:scale(1.1);border-color:color-mix(in oklab,var(--fg) 40%,transparent)}
+  .hiu .d:first-child{
+    border-radius:3px 0 0 3px;
+  }
+  .hiu .d:last-child{
+    border-radius:0 3px 3px 0;
+  }
+  .hiu .d:only-child{
+    border-radius:3px;
+  }
+  .hiu .d:hover{
+    transform:scaleY(1.1);
+    z-index:1;
+  }
   .hiu .d.h.on{
-    background:var(--impact);border-color:var(--impact);
-    box-shadow:0 2px 8px color-mix(in oklab,var(--impact) 30%,transparent);
+    background:var(--impact);
   }
   .hiu .d.i.on{
-    background:var(--important);border-color:var(--important);
-    box-shadow:0 2px 8px color-mix(in oklab,var(--important) 30%,transparent);
+    background:var(--important);
   }
   .hiu .d.u.on{
-    background:var(--urgent);border-color:var(--urgent);
-    box-shadow:0 2px 8px color-mix(in oklab,var(--urgent) 30%,transparent);
+    background:var(--urgent);
   }
 
   .list{display:grid;gap:16px;margin-top:20px}
@@ -1026,9 +1067,9 @@ function renderTodos(){
   el('#countInfo').textContent=`${items.length} shown · ${Object.keys(store.todos).length} total`;
 
   const headerRow = `<div class="todoHeader">
-    <div>Status</div>
-    <div>Title</div>
     <div>Priority</div>
+    <div>Title</div>
+    <div>Status</div>
     <div>Project</div>
     <div>Due Date</div>
   </div>`;
@@ -1036,20 +1077,17 @@ function renderTodos(){
   todoList.innerHTML=headerRow + items.map(t=>{
     const p=store.projects[t.projectId]; const ei=t.eisen||{impact:0,important:0,urgent:0};
     return `<div class="todoRow" data-id="${t.id}">
-      <select class="statusSel badge status-${t.status||'todo'}" data-act="setStatus" data-id="${t.id}">
-        ${['todo','in-progress','review','done'].map(sv=>`<option value="${sv}" ${t.status===sv?'selected':''}>${sv}</option>`).join('')}
-      </select>
-      <div class="title link" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit title">${t.title}</div>
       <div class="hiu" data-id="${t.id}">
         <span class="d h ${ei.impact?'on':''}" data-act="toggle" data-k="impact" title="High impact"></span>
         <span class="d i ${ei.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${ei.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-      <select class="projectSel" data-act="setProject" data-id="${t.id}" style="font-size:12px;border-radius:8px;padding:4px 8px;min-width:120px;background:var(--card);border:1px solid var(--border)">
-        <option value="">(No project)</option>
-        ${Object.values(store.projects).map(proj => `<option value="${proj.id}" ${t.projectId === proj.id ? 'selected' : ''}>${proj.name}</option>`).join('')}
-      </select>
-      <div class="link" style="padding:4px 8px;border-radius:8px;min-width:128px;background:var(--card);cursor:pointer" data-act="openModal" data-id="${t.id}" title="Click to edit todo">${t.due ? fmtDue(t.due) : '—'}</div>
+      <div class="title-cell">
+        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit title">${t.title}</span>
+      </div>
+      <div class="meta-text">${t.status}</div>
+      <div class="meta-text">${p?.name || '—'}</div>
+      <div class="meta-text">${t.due ? fmtDue(t.due) : '—'}</div>
       <div class="actions"></div>
     </div>`;
   }).join('');
@@ -1095,7 +1133,7 @@ function renderTodos(){
     
     // If clicking on a todo row but not on any specific control element, open the modal
     const todoRow = e.target.closest('.todoRow');
-    if (todoRow && !e.target.dataset.act && !e.target.closest('select, input, button, .hiu .d')) {
+    if (todoRow && !e.target.dataset.act && !e.target.closest('select, input, button, .hiu .d, .title')) {
       const todoId = todoRow.dataset.id;
       if (todoId) {
         openTodoModal(todoId);
@@ -1608,6 +1646,16 @@ el('#bCols')?.addEventListener('click',(e)=>{ const kb=store.kanbans[store.curre
 const dlgTodo=el('#dlgTodo');
 const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'), tDue=el('#tDue'), tStatus=el('#tStatus'), selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'), eisenForm=el('#eisenForm');
 el('#fabAdd').onclick=()=>openTodoModal();
+
+// Close dialogs when clicking on backdrop
+els('dialog').forEach(dialog => {
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) {
+      dialog.close();
+    }
+  });
+});
+
 function setEisenUI(e){ els('.d', eisenForm).forEach(b=>{ const k=b.dataset.k; b.classList.toggle('on', !!e[k]); }); }
 eisenForm.addEventListener('click', (ev)=>{ const btn=ev.target.closest('.d'); if(!btn) return; btn.classList.toggle('on'); });
 function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){ 
