@@ -652,6 +652,77 @@
     opacity: 0.8;
   }
 
+  /* Canvas View - Spatial Organization */
+  #canvasContainer{
+    position:relative;
+    width:100%;
+    height:800px;
+    background:var(--bg-secondary);
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  
+  #mainCanvas{
+    display:block;
+    cursor:grab;
+    background:radial-gradient(circle at 20px 20px, var(--muted) 1px, transparent 1px);
+    background-size:40px 40px;
+  }
+  
+  #mainCanvas:active{
+    cursor:grabbing;
+  }
+  
+  .canvas-entity{
+    position:absolute;
+    padding:12px 16px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:12px;
+    cursor:move;
+    user-select:none;
+    font-size:14px;
+    line-height:1.4;
+    box-shadow:var(--shadow-medium);
+    transition:all 0.2s var(--transition);
+    min-width:120px;
+    max-width:240px;
+  }
+  
+  .canvas-entity:hover{
+    box-shadow:var(--shadow-heavy);
+    transform:translateY(-2px);
+    border-color:var(--accent);
+  }
+  
+  .canvas-entity.dragging{
+    box-shadow:var(--shadow-float);
+    transform:rotate(2deg) scale(1.05);
+    z-index:1000;
+  }
+  
+  .canvas-entity.todo{
+    border-left:4px solid var(--accent);
+  }
+  
+  .canvas-entity.project{
+    border-left:4px solid var(--success);
+    background:color-mix(in oklab,var(--success) 5%,var(--bg));
+  }
+  
+  .canvas-entity-title{
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:4px;
+  }
+  
+  .canvas-entity-meta{
+    font-size:12px;
+    color:var(--muted);
+    opacity:0.8;
+  }
+
   /* Command palette - refined */
   .kbar{
     position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;
@@ -706,6 +777,7 @@
       <button class="tab" data-tab="projects">Projects</button>
       <button class="tab" data-tab="people">People</button>
       <button class="tab" data-tab="kanban">Kanban</button>
+      <button class="tab" data-tab="canvas">Canvas</button>
     </div>
     <div class="rightbar">
       <input type="file" id="fileImport" accept="application/json" class="hidden">
@@ -771,6 +843,27 @@
       </div>
     </div>
     <div class="grid-boards" id="kanbanGrid"></div>
+  </section>
+
+  <!-- CANVAS -->
+  <section id="view-canvas" class="panel hidden">
+    <div class="toolbar">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <select id="canvasViewSelect">
+          <option value="default">Default Canvas</option>
+        </select>
+        <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view">＋</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas">📌</button>
+        <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas">📁</button>
+        <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
+      </div>
+      <span class="note">Drag entities anywhere. Make visual heaps and organize spatially.</span>
+    </div>
+    <div id="canvasContainer">
+      <canvas id="mainCanvas" width="1200" height="800"></canvas>
+    </div>
   </section>
 </main>
 
@@ -986,6 +1079,16 @@ const demoData=()=>({
       {id:'col-review',name:'Review',todoIds:['3']},
       {id:'col-done',name:'Done',todoIds:[]}
     ]}
+  },
+  canvasViews:{
+    default:{
+      id:'default',
+      name:'Default Canvas',
+      entities:{
+        // Per-view positioning: entityType:entityId -> {x, y}
+        // Example: 'todo:1': {x: 150, y: 200}
+      }
+    }
   }
 });
 function dateStrOffset(days){const d=new Date(Date.now()+days*86400000);return d.toISOString().slice(0,10);} 
@@ -995,6 +1098,9 @@ function load(){try{const raw=localStorage.getItem(LS_KEY);if(!raw){const d=demo
   // Ensure backwards compatibility for view state
   if (!data.current) data.current = {};
   if (!data.current.filters) data.current.filters = {search:'', project:'', person:'', sort:'due-asc'};
+  if (!data.canvasViews) data.canvasViews = {
+    default: { id: 'default', name: 'Default Canvas', entities: {} }
+  };
   return data;
 }catch(e){console.error(e);const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}}
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(store));}
@@ -1077,7 +1183,7 @@ const universalHaystack=t=>{
 
 /*** ====== NAV + IO ====== ***/
 const tabs=el('#tabs');
-const views=['todos','projects','people','kanban'];
+const views=['todos','projects','people','kanban','canvas'];
 function setTab(tab){views.forEach(id=>el('#view-'+id).classList.toggle('hidden',tab!==id)); store.current.tab=tab; save(); render(true);}
 
 tabs.addEventListener('click',e=>{const b=e.target.closest('.tab'); if(!b) return; els('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); setTab(b.dataset.tab);});
@@ -1100,6 +1206,9 @@ el('#fileImport').addEventListener('change',e=>{const f=e.target.files[0]; if(!f
   // Ensure imported data has view state structure
   if (!data.current) data.current = {};
   if (!data.current.filters) data.current.filters = {search:'', project:'', person:'', sort:'due-asc'};
+  if (!data.canvasViews) data.canvasViews = {
+    default: { id: 'default', name: 'Default Canvas', entities: {} }
+  };
   store=data; save(); render();}catch(err){alert('Import failed: '+err.message);}}; r.readAsText(f); e.target.value='';});
 
 /*** ====== TODOS VIEW ====== ***/
@@ -1850,6 +1959,235 @@ kinput.addEventListener('keydown',(e)=>{ const items=Array.from(klist.children);
   if(e.key==='Escape'){ closeK(); }
 });
 
+/*** ====== CANVAS SYSTEM ====== ***/
+let currentCanvasView = 'default';
+let draggingEntity = null;
+let dragOffset = {x: 0, y: 0};
+
+function getCurrentCanvasView() {
+  if (!store.canvasViews) store.canvasViews = {};
+  if (!store.canvasViews[currentCanvasView]) {
+    store.canvasViews[currentCanvasView] = {
+      id: currentCanvasView,
+      name: currentCanvasView === 'default' ? 'Default Canvas' : `Canvas ${currentCanvasView}`,
+      entities: {}
+    };
+  }
+  return store.canvasViews[currentCanvasView];
+}
+
+function addEntityToCanvas(entityType, entityId) {
+  const view = getCurrentCanvasView();
+  const key = `${entityType}:${entityId}`;
+  
+  // Don't add if already exists
+  if (view.entities[key]) return;
+  
+  // Add at random position
+  view.entities[key] = {
+    x: 100 + Math.random() * 400,
+    y: 100 + Math.random() * 300
+  };
+  
+  save();
+  renderCanvas();
+}
+
+function renderCanvas() {
+  const container = el('#canvasContainer');
+  const canvas = el('#mainCanvas');
+  const view = getCurrentCanvasView();
+  
+  // Clear existing entities
+  els('.canvas-entity').forEach(el => el.remove());
+  
+  // Render entities
+  Object.entries(view.entities).forEach(([key, pos]) => {
+    const [type, id] = key.split(':');
+    let entity, title, meta;
+    
+    if (type === 'todo' && store.todos[id]) {
+      entity = store.todos[id];
+      title = entity.title;
+      meta = `${entity.status} • ${store.projects[entity.projectId]?.name || 'No project'}`;
+    } else if (type === 'project' && store.projects[id]) {
+      entity = store.projects[id];
+      title = entity.name;
+      meta = `${entity.todoIds?.length || 0} tasks`;
+    } else {
+      return; // Entity doesn't exist anymore
+    }
+    
+    const entityEl = document.createElement('div');
+    entityEl.className = `canvas-entity ${type}`;
+    entityEl.style.left = pos.x + 'px';
+    entityEl.style.top = pos.y + 'px';
+    entityEl.dataset.key = key;
+    
+    entityEl.innerHTML = `
+      <div class="canvas-entity-title">${title}</div>
+      <div class="canvas-entity-meta">${meta}</div>
+    `;
+    
+    // Add drag functionality
+    entityEl.addEventListener('mousedown', startDrag);
+    
+    container.appendChild(entityEl);
+  });
+  
+  // Update canvas view selector
+  updateCanvasViewSelector();
+}
+
+function startDrag(e) {
+  e.preventDefault();
+  draggingEntity = e.currentTarget;
+  draggingEntity.classList.add('dragging');
+  
+  const rect = draggingEntity.getBoundingClientRect();
+  const containerRect = el('#canvasContainer').getBoundingClientRect();
+  
+  dragOffset = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+  
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', endDrag);
+}
+
+function drag(e) {
+  if (!draggingEntity) return;
+  
+  const containerRect = el('#canvasContainer').getBoundingClientRect();
+  const x = e.clientX - containerRect.left - dragOffset.x;
+  const y = e.clientY - containerRect.top - dragOffset.y;
+  
+  // Constrain to container bounds
+  const maxX = containerRect.width - draggingEntity.offsetWidth;
+  const maxY = containerRect.height - draggingEntity.offsetHeight;
+  
+  const constrainedX = Math.max(0, Math.min(x, maxX));
+  const constrainedY = Math.max(0, Math.min(y, maxY));
+  
+  draggingEntity.style.left = constrainedX + 'px';
+  draggingEntity.style.top = constrainedY + 'px';
+}
+
+function endDrag(e) {
+  if (!draggingEntity) return;
+  
+  const key = draggingEntity.dataset.key;
+  const view = getCurrentCanvasView();
+  
+  // Save new position
+  view.entities[key] = {
+    x: parseInt(draggingEntity.style.left),
+    y: parseInt(draggingEntity.style.top)
+  };
+  
+  draggingEntity.classList.remove('dragging');
+  draggingEntity = null;
+  
+  document.removeEventListener('mousemove', drag);
+  document.removeEventListener('mouseup', endDrag);
+  
+  save();
+}
+
+function updateCanvasViewSelector() {
+  const select = el('#canvasViewSelect');
+  const views = Object.values(store.canvasViews || {});
+  
+  select.innerHTML = views.map(v => 
+    `<option value="${v.id}" ${v.id === currentCanvasView ? 'selected' : ''}>${v.name}</option>`
+  ).join('');
+}
+
+function showTodoSelector(callback) {
+  const todos = Object.values(store.todos);
+  const view = getCurrentCanvasView();
+  
+  // Filter out already added todos
+  const availableTodos = todos.filter(t => !view.entities[`todo:${t.id}`]);
+  
+  if (availableTodos.length === 0) {
+    alert('All todos are already on this canvas!');
+    return;
+  }
+  
+  const todoId = prompt('Select todo ID:\n' + 
+    availableTodos.map(t => `${t.id}: ${t.title}`).join('\n') +
+    '\n\nEnter todo ID:');
+  
+  if (todoId && availableTodos.find(t => t.id === todoId)) {
+    callback('todo', todoId);
+  }
+}
+
+function showProjectSelector(callback) {
+  const projects = Object.values(store.projects);
+  const view = getCurrentCanvasView();
+  
+  // Filter out already added projects
+  const availableProjects = projects.filter(p => !view.entities[`project:${p.id}`]);
+  
+  if (availableProjects.length === 0) {
+    alert('All projects are already on this canvas!');
+    return;
+  }
+  
+  const projectId = prompt('Select project ID:\n' + 
+    availableProjects.map(p => `${p.id}: ${p.name}`).join('\n') +
+    '\n\nEnter project ID:');
+  
+  if (projectId && availableProjects.find(p => p.id === projectId)) {
+    callback('project', projectId);
+  }
+}
+
+// Canvas event listeners
+el('#btnAddTodoToCanvas')?.addEventListener('click', () => {
+  showTodoSelector(addEntityToCanvas);
+});
+
+el('#btnAddProjectToCanvas')?.addEventListener('click', () => {
+  showProjectSelector(addEntityToCanvas);
+});
+
+el('#btnAddAllTodos')?.addEventListener('click', () => {
+  const todos = Object.values(store.todos);
+  const view = getCurrentCanvasView();
+  
+  todos.forEach(todo => {
+    const key = `todo:${todo.id}`;
+    if (!view.entities[key]) {
+      addEntityToCanvas('todo', todo.id);
+    }
+  });
+});
+
+el('#canvasViewSelect')?.addEventListener('change', (e) => {
+  currentCanvasView = e.target.value;
+  renderCanvas();
+});
+
+el('#btnAddCanvasView')?.addEventListener('click', () => {
+  const name = prompt('Canvas view name:');
+  if (!name) return;
+  
+  const id = 'canvas_' + Date.now();
+  store.canvasViews[id] = {
+    id,
+    name,
+    entities: {}
+  };
+  
+  currentCanvasView = id;
+  save();
+  renderCanvas();
+});
+
 /*** ====== INIT & RENDER ====== ***/
 function render(skipViewRestore){ 
   els('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===store.current.tab)); 
@@ -1863,7 +2201,8 @@ function render(skipViewRestore){
   renderTodos(); 
   renderProjects(); 
   renderPeople(); 
-  renderKanban(); 
+  renderKanban();
+  renderCanvas();
 }
 
 render();
