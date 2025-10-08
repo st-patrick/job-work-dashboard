@@ -2342,7 +2342,7 @@ canvasContainer?.addEventListener('wheel', (e) => {
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
   
-  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  const zoomFactor = e.deltaY > 0 ? 0.98 : 1.02;
   const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * zoomFactor));
   
   // Zoom towards mouse position
