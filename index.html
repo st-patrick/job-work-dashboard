@@ -867,6 +867,7 @@
         <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
         <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities">🗂️</button>
         <button class="iconbtn" id="btnFitToContent" title="Fit to content">🔍</button>
+    <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left">⤒</button>
       </div>
       <span class="note">Drag entities anywhere. Make visual heaps and organize spatially.</span>
     </div>
@@ -2203,6 +2204,8 @@ function getCanvasBounds() {
 }
 
 function fitCanvasToContent() {
+  const canvas = el('#mainCanvas');
+
   const container = el('#canvasContainer');
   const bounds = getCanvasBounds();
   
@@ -2214,7 +2217,7 @@ function fitCanvasToContent() {
   
   canvasTransform.scale = Math.min(scaleX, scaleY, 1) * 0.9; // 90% to add padding
   canvasTransform.x = -bounds.minX * canvasTransform.scale + 50;
-  canvasTransform.y = -bounds.minY * canvasTransform.scale + 50;
+  canvasTransform.y = -canvas.height -bounds.minY * canvasTransform.scale + 50;
   
   updateCanvasTransform();
 }
@@ -2301,6 +2304,30 @@ el('#btnAddCanvasView')?.addEventListener('click', () => {
   
   currentCanvasView = id;
   save();
+  renderCanvas();
+});
+
+// Reset canvas view to top left
+el('#btnCanvasReset')?.addEventListener('click', () => {
+  const canvas = el('#mainCanvas');
+  
+  canvasTransform.scale = 1;
+
+  // Find top-left-most entity
+  const view = getCurrentCanvasView();
+  const positions = Object.values(view.entities);
+  if (positions.length === 0) {
+    canvasTransform.x = 0;
+    canvasTransform.y = -canvas.height;;
+    canvasTransform.scale = 1;
+  } else {
+    const minX = Math.min(...positions.map(p => p.x));
+    const minY = Math.min(...positions.map(p => p.y));
+    canvasTransform.x = -minX;
+    canvasTransform.y = -canvas.height - minY;
+    canvasTransform.scale = 1;
+  }
+  updateCanvasTransform();
   renderCanvas();
 });
 
