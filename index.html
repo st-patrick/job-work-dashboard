@@ -312,28 +312,169 @@
   .person-compact{padding:8px!important}
   .person-actions{display:flex;gap:4px;align-items:center}
 
-  .grid-boards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-  @media (max-width:900px){.grid-boards{grid-template-columns:1fr 1fr}}
-  @media (max-width:560px){.grid-boards{grid-template-columns:1fr}}
+  /* Kanban Board - Clean Rhythmic Spacing */
+  .grid-boards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:24px;
+    margin-top:24px;
+  }
+  @media (max-width:900px){.grid-boards{grid-template-columns:1fr 1fr;gap:20px}}
+  @media (max-width:560px){.grid-boards{grid-template-columns:1fr;gap:16px}}
+  
   .column{
-    background:var(--panel);border:2px dashed var(--border);
-    border-radius:18px;padding:16px;min-height:180px;
+    background:var(--panel);
+    border:2px dashed var(--border);
+    border-radius:16px;
+    padding:20px;
+    min-height:200px;
     transition:all 0.3s var(--transition);
+    display:flex;
+    flex-direction:column;
   }
   .column:hover{
     border-color:color-mix(in oklab,var(--acc) 40%,transparent);
     background:color-mix(in oklab,var(--panel) 96%,var(--acc));
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-medium);
   }
+  
   .colhead{
-    display:flex;align-items:center;gap:12px;justify-content:space-between;
-    margin-bottom:12px;font-weight:var(--font-weight-bold);
-    font-size:16px;letter-spacing:-0.01em;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--border);
+    font-weight:var(--font-weight-bold);
+    font-size:16px;
+    letter-spacing:-0.01em;
   }
-  .coltools{display:flex;gap:8px;align-items:center}
-  .dropzone{min-height:100px;border-radius:12px;transition:all 0.3s var(--transition)}
+  
+  .coltools{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  
+  .dropzone{
+    flex:1;
+    min-height:120px;
+    border-radius:12px;
+    transition:all 0.3s var(--transition);
+    padding:8px;
+  }
   .dropzone.over{
-    outline:3px solid var(--acc);outline-offset:4px;
+    outline:3px solid var(--acc);
+    outline-offset:4px;
     background:color-mix(in oklab,var(--acc) 8%,transparent);
+    transform:scale(1.02);
+  }
+  
+  /* Kanban Toolbar - Organized Layout */
+  .kanban-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:end;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  
+  .kanban-toolbar-group{
+    display:flex;
+    align-items:end;
+    gap:12px;
+  }
+  
+  .kanban-control{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:140px;
+  }
+  
+  .kanban-control label{
+    font-size:12px;
+    font-weight:var(--font-weight-medium);
+    color:var(--muted);
+    margin-bottom:0;
+  }
+  
+  .kanban-control select{
+    font-size:14px;
+    padding:8px 12px;
+  }
+  
+  @media (max-width:640px){
+    .kanban-toolbar{
+      flex-direction:column;
+      align-items:stretch;
+      gap:16px;
+    }
+    .kanban-toolbar-group{
+      justify-content:space-between;
+    }
+    .kanban-control{
+      min-width:120px;
+    }
+  }
+  
+  /* Kanban Cards - Much Smaller Typography */
+  .card[kb] {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .card[kb] .cardhead {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  
+  .card[kb] .cardtitle {
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.3;
+  }
+  
+  .card[kb] .toolbar {
+    margin-top: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .card[kb] .pill {
+    font-size: 10px;
+    padding: 4px 8px;
+    gap: 4px;
+    border-radius: 12px;
+  }
+  
+  .card[kb] .pill .dot {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .card[kb] .badge {
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 8px;
+    font-weight: var(--font-weight-regular);
+  }
+  
+  /* Drag and Drop Visual Feedback */
+  .card[kb].dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
+    box-shadow: var(--shadow-heavy);
+  }
+  
+  .card[kb].drag-over {
+    border-top: 3px solid var(--acc);
+    transform: translateY(2px);
+  }
+  
+  .dropzone.over {
+    background: color-mix(in oklab,var(--acc) 8%,transparent) !important;
   }
 
   .fab{
@@ -537,11 +678,21 @@
 
   <!-- KANBAN -->
   <section id="view-kanban" class="panel hidden">
-    <div class="toolbar" style="gap:6px;align-items:end">
-      <div><label class="tiny muted">Board</label><select id="kbSelect"></select></div>
-      <button class="iconbtn" id="btnEditBoard" title="Edit board">⚙️</button>
-      <div><label class="tiny muted">Filter by project</label><select id="kbProject"><option value="">All</option></select></div>
-      <button class="iconbtn action" id="btnAddBoard" title="New board">＋</button>
+    <div class="toolbar kanban-toolbar">
+      <div class="kanban-toolbar-group">
+        <div class="kanban-control">
+          <label class="tiny muted">Board</label>
+          <select id="kbSelect"></select>
+        </div>
+        <button class="iconbtn" id="btnEditBoard" title="Edit board">⚙️</button>
+      </div>
+      <div class="kanban-toolbar-group">
+        <div class="kanban-control">
+          <label class="tiny muted">Filter by project</label>
+          <select id="kbProject"><option value="">All</option></select>
+        </div>
+        <button class="iconbtn action" id="btnAddBoard" title="New board">＋</button>
+      </div>
     </div>
     <div class="grid-boards" id="kanbanGrid"></div>
   </section>
@@ -1320,8 +1471,47 @@ function renderKanban(){
     }).join('');
   }
 
-  els('.card[kb]').forEach(c=>{ c.draggable=true; c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',c.dataset.id); c.classList.add('dragging'); ev.dataTransfer.effectAllowed='move';}); c.addEventListener('dragend',()=>c.classList.remove('dragging')); });
-  els('.dropzone').forEach(z=>{ z.addEventListener('dragover',ev=>{ev.preventDefault(); z.classList.add('over');}); z.addEventListener('dragleave',()=>z.classList.remove('over')); z.addEventListener('drop',ev=>{ev.preventDefault(); z.classList.remove('over'); const todoId=ev.dataTransfer.getData('text/plain'); moveInKanban(todoId,z.dataset.col);}); });
+  // Enhanced drag and drop with within-column sorting
+  els('.card[kb]').forEach(c=>{ 
+    c.draggable=true; 
+    c.addEventListener('dragstart',ev=>{
+      ev.dataTransfer.setData('text/plain',c.dataset.id); 
+      c.classList.add('dragging'); 
+      ev.dataTransfer.effectAllowed='move';
+    }); 
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+    
+    // Allow dropping on cards for reordering within column
+    c.addEventListener('dragover',ev=>{
+      if(c.classList.contains('dragging')) return;
+      ev.preventDefault();
+      c.classList.add('drag-over');
+    });
+    c.addEventListener('dragleave',()=>c.classList.remove('drag-over'));
+    c.addEventListener('drop',ev=>{
+      if(c.classList.contains('dragging')) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      c.classList.remove('drag-over');
+      const todoId=ev.dataTransfer.getData('text/plain');
+      const targetId=c.dataset.id;
+      moveInKanban(todoId, c.closest('.dropzone').dataset.col, targetId);
+    });
+  });
+  
+  els('.dropzone').forEach(z=>{ 
+    z.addEventListener('dragover',ev=>{
+      ev.preventDefault(); 
+      z.classList.add('over');
+    }); 
+    z.addEventListener('dragleave',()=>z.classList.remove('over')); 
+    z.addEventListener('drop',ev=>{
+      ev.preventDefault(); 
+      z.classList.remove('over'); 
+      const todoId=ev.dataTransfer.getData('text/plain'); 
+      moveInKanban(todoId,z.dataset.col);
+    }); 
+  });
 
   // inline column rename
   kanbanGrid.addEventListener('keydown', (e)=>{ if(e.target.dataset.act==='renameCol' && e.key==='Enter'){ e.preventDefault(); e.target.blur(); }});
@@ -1333,7 +1523,7 @@ function renderKanban(){
   updateBoardControls();
 }
 function kanbanCard(t){ const p=store.projects[t.projectId]; return `<div class="card" kb data-id="${t.id}" data-act="openModal" style="cursor:pointer" title="Click to edit todo"><div class="cardhead"><div class="cardtitle tiny">${t.title}</div></div><div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span><span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div></div>`; }
-function moveInKanban(todoId,toColId){ 
+function moveInKanban(todoId, toColId, targetTodoId = null){ 
   const isDefaultBoard = store.current.activeKanbanId === 'default';
   
   if (isDefaultBoard) {
@@ -1346,11 +1536,31 @@ function moveInKanban(todoId,toColId){
       renderTodos(); // Also update todos view since status changed
     }
   } else {
-    // Regular board handling
-    const kb=store.kanbans[store.current.activeKanbanId]; 
-    kb.columns.forEach(c=>{const i=c.todoIds.indexOf(todoId); if(i>=0) c.todoIds.splice(i,1);}); 
-    const tgt=kb.columns.find(c=>c.id===toColId); 
-    if(tgt && !tgt.todoIds.includes(todoId)) tgt.todoIds.unshift(todoId); 
+    // Regular board handling with position support
+    const kb = store.kanbans[store.current.activeKanbanId]; 
+    const sourceCol = kb.columns.find(c => c.todoIds.includes(todoId));
+    const targetCol = kb.columns.find(c => c.id === toColId); 
+    
+    if (!targetCol) return;
+    
+    // Remove from source column
+    if (sourceCol) {
+      const sourceIndex = sourceCol.todoIds.indexOf(todoId);
+      if (sourceIndex >= 0) sourceCol.todoIds.splice(sourceIndex, 1);
+    }
+    
+    // Add to target column at specific position
+    if (targetTodoId && targetCol.todoIds.includes(targetTodoId)) {
+      // Insert before the target todo
+      const targetIndex = targetCol.todoIds.indexOf(targetTodoId);
+      targetCol.todoIds.splice(targetIndex, 0, todoId);
+    } else {
+      // Add to end if no specific target or target not found
+      if (!targetCol.todoIds.includes(todoId)) {
+        targetCol.todoIds.push(todoId);
+      }
+    }
+    
     save(); 
     renderKanban();
   }
