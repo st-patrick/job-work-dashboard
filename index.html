@@ -668,10 +668,17 @@
     cursor:grab;
     background:radial-gradient(circle at 20px 20px, var(--muted) 1px, transparent 1px);
     background-size:40px 40px;
+    touch-action:none; /* Prevent default touch behaviors */
   }
   
   #mainCanvas:active{
     cursor:grabbing;
+  }
+  
+  .canvas-viewport{
+    position:relative;
+    transform-origin:0 0;
+    transition:transform 0.1s ease-out;
   }
   
   .canvas-entity{
@@ -858,11 +865,14 @@
         <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas">📌</button>
         <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas">📁</button>
         <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
+        <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities">🗂️</button>
+        <button class="iconbtn" id="btnFitToContent" title="Fit to content">🔍</button>
       </div>
       <span class="note">Drag entities anywhere. Make visual heaps and organize spatially.</span>
     </div>
     <div id="canvasContainer">
       <canvas id="mainCanvas" width="1200" height="800"></canvas>
+      <div class="canvas-viewport" id="canvasViewport"></div>
     </div>
   </section>
 </main>
@@ -1963,6 +1973,11 @@ kinput.addEventListener('keydown',(e)=>{ const items=Array.from(klist.children);
 let currentCanvasView = 'default';
 let draggingEntity = null;
 let dragOffset = {x: 0, y: 0};
+let canvasTransform = { x: 0, y: 0, scale: 1 };
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let clickStart = { x: 0, y: 0, time: 0 };
+let hasMoved = false;
 
 function getCurrentCanvasView() {
   if (!store.canvasViews) store.canvasViews = {};
@@ -1996,10 +2011,14 @@ function addEntityToCanvas(entityType, entityId) {
 function renderCanvas() {
   const container = el('#canvasContainer');
   const canvas = el('#mainCanvas');
+  const viewport = el('#canvasViewport');
   const view = getCurrentCanvasView();
   
   // Clear existing entities
   els('.canvas-entity').forEach(el => el.remove());
+  
+  // Apply current transform
+  updateCanvasTransform();
   
   // Render entities
   Object.entries(view.entities).forEach(([key, pos]) => {
@@ -2029,70 +2048,126 @@ function renderCanvas() {
       <div class="canvas-entity-meta">${meta}</div>
     `;
     
-    // Add drag functionality
-    entityEl.addEventListener('mousedown', startDrag);
+    // Add drag and click functionality
+    entityEl.addEventListener('mousedown', startEntityInteraction);
     
-    container.appendChild(entityEl);
+    el('#canvasViewport').appendChild(entityEl);
   });
   
   // Update canvas view selector
   updateCanvasViewSelector();
 }
 
-function startDrag(e) {
+// Enhanced interaction system for canvas entities
+function startEntityInteraction(e) {
   e.preventDefault();
+  e.stopPropagation();
+  
+  clickStart = {
+    x: e.clientX,
+    y: e.clientY, 
+    time: Date.now()
+  };
+  hasMoved = false;
+  
   draggingEntity = e.currentTarget;
-  draggingEntity.classList.add('dragging');
   
   const rect = draggingEntity.getBoundingClientRect();
-  const containerRect = el('#canvasContainer').getBoundingClientRect();
+  const viewportRect = el('#canvasViewport').getBoundingClientRect();
   
   dragOffset = {
     x: e.clientX - rect.left,
     y: e.clientY - rect.top
   };
   
-  document.addEventListener('mousemove', drag);
-  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('mousemove', dragEntity);
+  document.addEventListener('mouseup', endEntityInteraction);
 }
 
-function drag(e) {
+function dragEntity(e) {
   if (!draggingEntity) return;
   
-  const containerRect = el('#canvasContainer').getBoundingClientRect();
-  const x = e.clientX - containerRect.left - dragOffset.x;
-  const y = e.clientY - containerRect.top - dragOffset.y;
+  const moveDistance = Math.abs(e.clientX - clickStart.x) + Math.abs(e.clientY - clickStart.y);
+  if (moveDistance > 5) {
+    hasMoved = true;
+    if (!draggingEntity.classList.contains('dragging')) {
+      draggingEntity.classList.add('dragging');
+    }
+  }
   
-  // Constrain to container bounds
-  const maxX = containerRect.width - draggingEntity.offsetWidth;
-  const maxY = containerRect.height - draggingEntity.offsetHeight;
-  
-  const constrainedX = Math.max(0, Math.min(x, maxX));
-  const constrainedY = Math.max(0, Math.min(y, maxY));
-  
-  draggingEntity.style.left = constrainedX + 'px';
-  draggingEntity.style.top = constrainedY + 'px';
+  if (hasMoved) {
+    const viewportRect = el('#canvasViewport').getBoundingClientRect();
+    const x = (e.clientX - viewportRect.left) / canvasTransform.scale - dragOffset.x;
+    const y = (e.clientY - viewportRect.top) / canvasTransform.scale - dragOffset.y;
+    
+    draggingEntity.style.left = x + 'px';
+    draggingEntity.style.top = y + 'px';
+  }
 }
 
-function endDrag(e) {
+function endEntityInteraction(e) {
   if (!draggingEntity) return;
   
   const key = draggingEntity.dataset.key;
   const view = getCurrentCanvasView();
   
-  // Save new position
-  view.entities[key] = {
-    x: parseInt(draggingEntity.style.left),
-    y: parseInt(draggingEntity.style.top)
-  };
+  if (hasMoved) {
+    // Save new position
+    view.entities[key] = {
+      x: parseInt(draggingEntity.style.left),
+      y: parseInt(draggingEntity.style.top)
+    };
+    save();
+  } else {
+    // Handle click (open modal)
+    const clickDuration = Date.now() - clickStart.time;
+    if (clickDuration < 300) { // Short click
+      openEntityModal(key);
+    }
+  }
   
   draggingEntity.classList.remove('dragging');
   draggingEntity = null;
   
-  document.removeEventListener('mousemove', drag);
-  document.removeEventListener('mouseup', endDrag);
+  document.removeEventListener('mousemove', dragEntity);
+  document.removeEventListener('mouseup', endEntityInteraction);
+}
+
+function openEntityModal(key) {
+  const [type, id] = key.split(':');
   
-  save();
+  if (type === 'todo' && store.todos[id]) {
+    // Open todo modal for editing
+    const t = store.todos[id];
+    const dlgTodo = el('#dlgTodo');
+    const tId = el('#tId');
+    const tTitle = el('#tTitle');
+    const tNotes = el('#tNotes');
+    const tProject = el('#tProject');
+    const tDue = el('#tDue');
+    const tStatus = el('#tStatus');
+    
+    tId.value = t.id;
+    tTitle.value = t.title || '';
+    tNotes.value = t.notes || '';
+    tProject.value = t.projectId || '';
+    tDue.value = t.due || '';
+    tStatus.value = t.status || 'todo';
+    
+    // Set eisen values
+    const eisenForm = el('#eisenForm');
+    if (eisenForm && t.eisen) {
+      els('.d', eisenForm).forEach(d => {
+        const key = d.dataset.k;
+        d.classList.toggle('on', !!t.eisen[key]);
+      });
+    }
+    
+    dlgTodo.showModal();
+  } else if (type === 'project') {
+    // Switch to projects view and highlight the project
+    setTab('projects');
+  }
 }
 
 function updateCanvasViewSelector() {
@@ -2102,6 +2177,46 @@ function updateCanvasViewSelector() {
   select.innerHTML = views.map(v => 
     `<option value="${v.id}" ${v.id === currentCanvasView ? 'selected' : ''}>${v.name}</option>`
   ).join('');
+}
+
+function updateCanvasTransform() {
+  const viewport = el('#canvasViewport');
+  if (viewport) {
+    viewport.style.transform = `translate(${canvasTransform.x}px, ${canvasTransform.y}px) scale(${canvasTransform.scale})`;
+  }
+}
+
+function getCanvasBounds() {
+  const view = getCurrentCanvasView();
+  const positions = Object.values(view.entities);
+  
+  if (positions.length === 0) {
+    return { minX: 0, minY: 0, maxX: 1200, maxY: 800 };
+  }
+  
+  const minX = Math.min(...positions.map(p => p.x)) - 100;
+  const minY = Math.min(...positions.map(p => p.y)) - 100;
+  const maxX = Math.max(...positions.map(p => p.x)) + 300;
+  const maxY = Math.max(...positions.map(p => p.y)) + 200;
+  
+  return { minX, minY, maxX, maxY };
+}
+
+function fitCanvasToContent() {
+  const container = el('#canvasContainer');
+  const bounds = getCanvasBounds();
+  
+  const contentWidth = bounds.maxX - bounds.minX;
+  const contentHeight = bounds.maxY - bounds.minY;
+  
+  const scaleX = container.offsetWidth / contentWidth;
+  const scaleY = container.offsetHeight / contentHeight;
+  
+  canvasTransform.scale = Math.min(scaleX, scaleY, 1) * 0.9; // 90% to add padding
+  canvasTransform.x = -bounds.minX * canvasTransform.scale + 50;
+  canvasTransform.y = -bounds.minY * canvasTransform.scale + 50;
+  
+  updateCanvasTransform();
 }
 
 function showTodoSelector(callback) {
@@ -2169,6 +2284,7 @@ el('#btnAddAllTodos')?.addEventListener('click', () => {
 
 el('#canvasViewSelect')?.addEventListener('change', (e) => {
   currentCanvasView = e.target.value;
+  canvasTransform = { x: 0, y: 0, scale: 1 }; // Reset transform on view change
   renderCanvas();
 });
 
@@ -2187,6 +2303,246 @@ el('#btnAddCanvasView')?.addEventListener('click', () => {
   save();
   renderCanvas();
 });
+
+// Zoom and pan event listeners
+const canvasContainer = el('#canvasContainer');
+
+// Mouse wheel zoom
+canvasContainer?.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  
+  const rect = canvasContainer.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * zoomFactor));
+  
+  // Zoom towards mouse position
+  const scaleRatio = newScale / canvasTransform.scale;
+  canvasTransform.x = mouseX - (mouseX - canvasTransform.x) * scaleRatio;
+  canvasTransform.y = mouseY - (mouseY - canvasTransform.y) * scaleRatio;
+  canvasTransform.scale = newScale;
+  
+  updateCanvasTransform();
+});
+
+// Pan with mouse drag on canvas background
+canvasContainer?.addEventListener('mousedown', (e) => {
+  if (e.target === canvasContainer || e.target.id === 'mainCanvas') {
+    isPanning = true;
+    panStart = { x: e.clientX - canvasTransform.x, y: e.clientY - canvasTransform.y };
+    canvasContainer.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (isPanning) {
+    canvasTransform.x = e.clientX - panStart.x;
+    canvasTransform.y = e.clientY - panStart.y;
+    updateCanvasTransform();
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (isPanning) {
+    isPanning = false;
+    if (canvasContainer) canvasContainer.style.cursor = 'grab';
+  }
+});
+
+// Touch support for mobile zoom/pan
+canvasContainer?.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  // Handle touch pan/zoom - basic implementation
+});
+
+canvasContainer?.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  // Handle touch gestures
+});
+
+canvasContainer?.addEventListener('touchend', (e) => {
+  e.preventDefault();
+});
+
+// Arrangement functionality
+el('#btnArrangeEntities')?.addEventListener('click', () => {
+  showArrangementDialog();
+});
+
+el('#btnFitToContent')?.addEventListener('click', () => {
+  fitCanvasToContent();
+});
+
+function showArrangementDialog() {
+  const view = getCurrentCanvasView();
+  const entityCount = Object.keys(view.entities).length;
+  
+  if (entityCount === 0) {
+    alert('No entities to arrange on this canvas!');
+    return;
+  }
+  
+  const arrangeBy = prompt(`⚠️ WARNING: This will overwrite all custom positions!\n\nCurrent entities: ${entityCount}\n\nArrange by:\n1. project\n2. status\n3. priority\n4. grid\n\nEnter option (1-4) or cancel:`);
+  
+  if (!arrangeBy) return;
+  
+  const confirmationText = `ARRANGE ${entityCount} ENTITIES`;
+  const userConfirmation = prompt(`🚨 FINAL CONFIRMATION 🚨\n\nThis will PERMANENTLY OVERWRITE all ${entityCount} custom positions you've carefully placed.\n\nType exactly: "${confirmationText}" to confirm:`);
+  
+  if (userConfirmation !== confirmationText) {
+    alert('Arrangement canceled - positions preserved.');
+    return;
+  }
+  
+  switch(arrangeBy) {
+    case '1': arrangeByProject(); break;
+    case '2': arrangeByStatus(); break;
+    case '3': arrangeByPriority(); break;
+    case '4': arrangeInGrid(); break;
+    default: alert('Invalid option - arrangement canceled.');
+  }
+}
+
+function arrangeByProject() {
+  const view = getCurrentCanvasView();
+  const groups = {};
+  
+  // Group entities
+  Object.entries(view.entities).forEach(([key, pos]) => {
+    const [type, id] = key.split(':');
+    let projectId = 'no-project';
+    
+    if (type === 'todo' && store.todos[id]) {
+      projectId = store.todos[id].projectId || 'no-project';
+    } else if (type === 'project') {
+      projectId = id;
+    }
+    
+    if (!groups[projectId]) groups[projectId] = [];
+    groups[projectId].push(key);
+  });
+  
+  // Position groups
+  let groupX = 50;
+  Object.entries(groups).forEach(([projectId, keys]) => {
+    let entityY = 50;
+    
+    keys.forEach(key => {
+      view.entities[key] = { x: groupX, y: entityY };
+      entityY += 120;
+    });
+    
+    groupX += 300;
+  });
+  
+  save();
+  renderCanvas();
+  alert('Arranged by project! 📁');
+}
+
+function arrangeByStatus() {
+  const view = getCurrentCanvasView();
+  const statusOrder = ['todo', 'in-progress', 'waiting', 'review', 'done'];
+  const groups = {};
+  
+  // Group by status
+  Object.entries(view.entities).forEach(([key, pos]) => {
+    const [type, id] = key.split(':');
+    let status = 'unknown';
+    
+    if (type === 'todo' && store.todos[id]) {
+      status = store.todos[id].status || 'todo';
+    } else if (type === 'project') {
+      status = 'project';
+    }
+    
+    if (!groups[status]) groups[status] = [];
+    groups[status].push(key);
+  });
+  
+  // Position by status columns
+  let columnX = 50;
+  statusOrder.concat(['project', 'unknown']).forEach(status => {
+    if (groups[status]) {
+      let entityY = 50;
+      groups[status].forEach(key => {
+        view.entities[key] = { x: columnX, y: entityY };
+        entityY += 100;
+      });
+      columnX += 250;
+    }
+  });
+  
+  save();
+  renderCanvas();
+  alert('Arranged by status! 📊');
+}
+
+function arrangeByPriority() {
+  const view = getCurrentCanvasView();
+  const entities = Object.entries(view.entities);
+  
+  // Sort by priority (HIU score)
+  entities.sort(([keyA], [keyB]) => {
+    const [typeA, idA] = keyA.split(':');
+    const [typeB, idB] = keyB.split(':');
+    
+    const getScore = (type, id) => {
+      if (type === 'todo' && store.todos[id]) {
+        const e = store.todos[id].eisen || {};
+        return (e.impact || 0) + (e.important || 0) + (e.urgent || 0);
+      }
+      return type === 'project' ? 5 : 0; // Projects at top
+    };
+    
+    return getScore(typeB, idB) - getScore(typeA, idA);
+  });
+  
+  // Arrange in priority order (top to bottom, left to right)
+  let x = 50, y = 50;
+  const maxWidth = 900;
+  
+  entities.forEach(([key], index) => {
+    view.entities[key] = { x, y };
+    
+    x += 200;
+    if (x > maxWidth) {
+      x = 50;
+      y += 120;
+    }
+  });
+  
+  save();
+  renderCanvas();
+  alert('Arranged by priority! ⭐');
+}
+
+function arrangeInGrid() {
+  const view = getCurrentCanvasView();
+  const entities = Object.keys(view.entities);
+  const cols = Math.ceil(Math.sqrt(entities.length));
+  
+  let row = 0, col = 0;
+  entities.forEach(key => {
+    view.entities[key] = {
+      x: 80 + col * 180,
+      y: 80 + row * 140
+    };
+    
+    col++;
+    if (col >= cols) {
+      col = 0;
+      row++;
+    }
+  });
+  
+  save();
+  renderCanvas();
+  alert('Arranged in grid! 📋');
+}
 
 /*** ====== INIT & RENDER ====== ***/
 function render(skipViewRestore){ 
