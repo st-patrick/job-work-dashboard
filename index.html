@@ -325,6 +325,26 @@
     transform:scaleY(1.1);
     z-index:1;
   }
+  
+  /* Hover feedback for inactive indicators */
+  .hiu .d:not(.on):hover{
+    background:color-mix(in oklab,var(--border) 70%,var(--fg));
+    box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--fg) 30%,transparent);
+  }
+  .hiu .d.h:not(.on):hover{
+    background:color-mix(in oklab,var(--impact) 15%,var(--border));
+    box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--impact) 40%,transparent);
+  }
+  .hiu .d.i:not(.on):hover{
+    background:color-mix(in oklab,var(--important) 15%,var(--border));
+    box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--important) 40%,transparent);
+  }
+  .hiu .d.u:not(.on):hover{
+    background:color-mix(in oklab,var(--urgent) 15%,var(--border));
+    box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--urgent) 40%,transparent);
+  }
+  
+  /* Active state styles */
   .hiu .d.h.on{
     background:var(--impact);
   }
@@ -686,8 +706,6 @@
       <button class="tab" data-tab="kanban">Kanban</button>
     </div>
     <div class="rightbar">
-      <button class="iconbtn" id="btnExport" title="Export backup (download JSON)">⬇️</button>
-      <button class="iconbtn" id="btnImport" title="Import backup (upload JSON)">⬆️</button>
       <input type="file" id="fileImport" accept="application/json" class="hidden">
     </div>
   </div>
@@ -1018,16 +1036,8 @@ function setTab(tab){views.forEach(id=>el('#view-'+id).classList.toggle('hidden'
 
 tabs.addEventListener('click',e=>{const b=e.target.closest('.tab'); if(!b) return; els('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); setTab(b.dataset.tab);});
 
-el('#btnExport').onclick=()=>{
-  const btn = el('#btnExport');
-  const originalText = btn.textContent;
-  
-  // Visual feedback
-  btn.textContent = '✓';
-  btn.style.background = 'var(--ok)';
-  btn.style.color = 'white';
-  btn.style.transform = 'scale(0.95)';
-  
+// Backup functions
+function exportBackup() {
   // Create and download backup
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
   const a=document.createElement('a'); 
@@ -1037,15 +1047,9 @@ el('#btnExport').onclick=()=>{
   a.click(); 
   a.remove();
   
-  // Reset button after 1 second
-  setTimeout(() => {
-    btn.textContent = originalText;
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.style.transform = '';
-  }, 1000);
-};
-el('#btnImport').onclick=()=>el('#fileImport').click();
+  // Close command palette
+  closeK();
+}
 el('#fileImport').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{try{const data=JSON.parse(r.result); if(!data.todos||!data.projects||!data.people) throw new Error('Invalid backup'); store=data; save(); render(true);}catch(err){alert('Import failed: '+err.message);}}; r.readAsText(f); e.target.value='';});
 
 /*** ====== TODOS VIEW ====== ***/
@@ -1775,6 +1779,8 @@ const CMDS=[
   {label:'New person', run:()=>el('#dlgPerson').showModal()},
   {label:'New board', run:()=>el('#btnAddBoard').click()},
   {label:'Edit current board', run:()=>openBoardEditor()},
+  {label:'Export backup', run:()=>exportBackup()},
+  {label:'Import backup', run:()=>el('#fileImport').click()},
   {label:'Filter status: todo', run:()=>{ setTab('todos'); fSort.value='due-asc'; fPerson.value=''; fProject.value=''; fSearch.value=''; renderTodos(); }},
   {label:'Focus search', run:()=>{ setTab('todos'); fSearch.focus(); }},
 ];
