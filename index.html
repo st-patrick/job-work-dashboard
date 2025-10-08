@@ -853,27 +853,23 @@
   </section>
 
   <!-- CANVAS -->
-  <section id="view-canvas" class="panel hidden">
-    <div class="toolbar">
-      <div style="display:flex;gap:12px;align-items:center;">
+
+  <section id="view-canvas" class="hidden" style="padding:0;margin:0;border:none;background:none;">
+    <div id="canvasContainer" style="position:relative;width:100%;height:calc(100vh - 80px);border-radius:0;box-shadow:none;padding:0;margin:0;background:var(--bg-secondary);border:none;">
+      <canvas id="mainCanvas" width="1200" height="800" style="display:block;width:100%;height:100%;background:radial-gradient(circle at 20px 20px, var(--muted) 1px, transparent 1px);background-size:40px 40px;"></canvas>
+      <div class="canvas-viewport" id="canvasViewport"></div>
+      <div class="canvas-toolbar-floating" style="position:absolute;top:24px;right:24px;z-index:10;display:flex;gap:12px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow-float);padding:12px 20px;">
         <select id="canvasViewSelect">
           <option value="default">Default Canvas</option>
         </select>
         <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view">＋</button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
         <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas">📌</button>
         <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas">📁</button>
         <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
         <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities">🗂️</button>
         <button class="iconbtn" id="btnFitToContent" title="Fit to content">🔍</button>
-    <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left">⤒</button>
+        <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left">⤒</button>
       </div>
-      <span class="note">Drag entities anywhere. Make visual heaps and organize spatially.</span>
-    </div>
-    <div id="canvasContainer">
-      <canvas id="mainCanvas" width="1200" height="800"></canvas>
-      <div class="canvas-viewport" id="canvasViewport"></div>
     </div>
   </section>
 </main>
@@ -2323,7 +2319,7 @@ el('#btnCanvasReset')?.addEventListener('click', () => {
   } else {
     const minX = Math.min(...positions.map(p => p.x));
     const minY = Math.min(...positions.map(p => p.y));
-    canvasTransform.x = -minX;
+    canvasTransform.x = -minX + 50;
     canvasTransform.y = -canvas.height - minY;
     canvasTransform.scale = 1;
   }
