@@ -813,7 +813,13 @@
         </select>
       </div>
     </div>
-    <div class="toolbar"><span class="note" id="countInfo"></span></div>
+    <div class="toolbar">
+      <span class="note" id="countInfo"></span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="fShowArchived" style="cursor:pointer">
+        <span class="tiny muted">Show archived</span>
+      </label>
+    </div>
     <div class="list-todos" id="todoList"></div>
   </section>
 
@@ -1126,7 +1132,8 @@ function saveViewState() {
     search: fSearch.value || '',
     project: fProject.value || '',
     person: fPerson.value || '', 
-    sort: fSort.value || 'due-asc'
+    sort: fSort.value || 'due-asc',
+    showArchived: fShowArchived?.checked || false
   };
   save();
 }
@@ -1135,13 +1142,14 @@ function restoreViewState() {
   if (!store.current?.filters) return;
   
   // Safety check - make sure filter elements exist
-  if (!fSearch || !fProject || !fPerson || !fSort) return;
+  if (!fSearch || !fProject || !fPerson || !fSort || !fShowArchived) return;
   
   const filters = store.current.filters;
   if (filters.search !== undefined) fSearch.value = filters.search;
   if (filters.project !== undefined) fProject.value = filters.project;
   if (filters.person !== undefined) fPerson.value = filters.person;
   if (filters.sort !== undefined) fSort.value = filters.sort;
+  if (filters.showArchived !== undefined) fShowArchived.checked = filters.showArchived;
 }
 
 function deleteTodo(id) {
@@ -1223,8 +1231,8 @@ el('#fileImport').addEventListener('change',e=>{const f=e.target.files[0]; if(!f
   store=data; save(); render();}catch(err){alert('Import failed: '+err.message);}}; r.readAsText(f); e.target.value='';});
 
 /*** ====== TODOS VIEW ====== ***/
-const fSearch=el('#fSearch'), fProject=el('#fProject'), fPerson=el('#fPerson'), fSort=el('#fSort'), todoList=el('#todoList');
-[fSearch,fProject,fPerson,fSort].forEach(c=>c.addEventListener('input',()=>{
+const fSearch=el('#fSearch'), fProject=el('#fProject'), fPerson=el('#fPerson'), fSort=el('#fSort'), fShowArchived=el('#fShowArchived'), todoList=el('#todoList');
+[fSearch,fProject,fPerson,fSort,fShowArchived].forEach(c=>c.addEventListener('input',()=>{
   renderMainTodos();
   saveViewState();
 }));
@@ -1257,8 +1265,11 @@ function renderMainTodos() {
   const person = fPerson.value;
   if (person) { items = items.filter(t => (t.people || []).includes(person)); }
   
-  // Filter out archived todos
-  items = items.filter(t => !t.archived);
+  // Filter archived todos based on checkbox
+  const showArchived = fShowArchived?.checked || false;
+  if (!showArchived) {
+    items = items.filter(t => !t.archived);
+  }
 
   const sorter = SORTS[fSort.value] || SORTS['due-asc'];
   items.sort(sorter);
@@ -1277,8 +1288,10 @@ function renderMainTodos() {
     const isLate = t.due && new Date(t.due) < new Date().setHours(0, 0, 0, 0);
     const dueClass = isLate ? 'style="color:var(--bad)"' : '';
     const project = store.projects[t.projectId];
+    const archivedStyle = t.archived ? 'style="opacity:0.5"' : '';
+    const archivedBadge = t.archived ? '<span class="badge" style="background:var(--muted);color:#fff;margin-left:8px">🗄 Archived</span>' : '';
     
-    return `<div class="todoRow" data-id="${t.id}">
+    return `<div class="todoRow" data-id="${t.id}" ${archivedStyle}>
       <div class="hiu" data-id="${t.id}">
         <span class="d h ${t.eisen?.impact ? 'on' : ''}" data-act="toggle" data-k="impact" title="High impact"></span>
         <span class="d i ${t.eisen?.important ? 'on' : ''}" data-act="toggle" data-k="important" title="Important"></span>
@@ -1286,12 +1299,52 @@ function renderMainTodos() {
       </div>
       <div class="title-cell">
         <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit title">${t.title}</span>
+        ${archivedBadge}
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
       <div class="meta-text" ${dueClass}>${t.due ? fmtDue(t.due) : '—'}</div>
     </div>`;
   }).join('');
+  
+  // Event listeners for main todos view
+  todoList.onclick = e => {
+    const id = e.target.dataset.id;
+    if (e.target.dataset.act === 'toggle') {
+      const k = e.target.dataset.k;
+      const t = store.todos[e.target.closest('.hiu').dataset.id];
+      t.eisen = t.eisen || {impact: 0, important: 0, urgent: 0};
+      t.eisen[k] = t.eisen[k] ? 0 : 1;
+      save();
+      renderMainTodos();
+    }
+    
+    // If clicking on a todo row but not on any specific control element, open the modal
+    const todoRow = e.target.closest('.todoRow');
+    if (todoRow && !e.target.dataset.act && !e.target.closest('select, input, button, .hiu .d, .title')) {
+      const todoId = todoRow.dataset.id;
+      if (todoId) {
+        openTodoModal(todoId);
+      }
+    }
+  };
+  
+  // Inline title edit
+  todoList.addEventListener('keydown', (e) => {
+    if (e.target.dataset.act === 'editTitle' && e.key === 'Enter') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+  
+  todoList.addEventListener('blur', (e) => {
+    if (e.target.dataset.act === 'editTitle') {
+      const id = e.target.dataset.id;
+      const v = e.target.textContent.trim();
+      store.todos[id].title = v || store.todos[id].title;
+      save();
+    }
+  }, true);
 }
 
 const renderTodos = (items = [], container, {showProject=false, showPeople=false, showTags=false, showStatus=true, showDue=true}={}) => {
