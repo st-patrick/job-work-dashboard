@@ -2970,24 +2970,75 @@ el('#btnCanvasReset')?.addEventListener('click', () => {
 // Zoom and pan event listeners
 const canvasContainer = el('#canvasContainer');
 
-// Mouse wheel zoom
+// Trackpad detection: trackpads typically have smaller, more frequent deltaY values
+// We'll detect this by checking if deltas are small and precise (< 50 and not multiples of 100)
+let isTrackpad = null;
+let wheelSamples = [];
+
+// Mouse wheel zoom OR trackpad pan (smart detection)
 canvasContainer?.addEventListener('wheel', (e) => {
   e.preventDefault();
   
-  const rect = canvasContainer.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
+  // Detect trackpad vs mouse wheel based on delta characteristics
+  if (isTrackpad === null && wheelSamples.length < 5) {
+    // Collect samples to determine input device
+    wheelSamples.push(Math.abs(e.deltaY));
+    
+    if (wheelSamples.length === 5) {
+      // Trackpads: small, variable deltas (usually < 50)
+      // Mouse wheels: large, discrete deltas (usually 100, 120, or multiples)
+      const avgDelta = wheelSamples.reduce((a, b) => a + b, 0) / wheelSamples.length;
+      const hasSmallDeltas = wheelSamples.every(d => d < 50);
+      const hasVariableDeltas = new Set(wheelSamples).size > 2;
+      
+      isTrackpad = hasSmallDeltas && hasVariableDeltas;
+      console.log('Input device detected:', isTrackpad ? 'Trackpad' : 'Mouse wheel', 
+                  '(avg delta:', avgDelta.toFixed(1), ')');
+    }
+  }
   
-  const zoomFactor = e.deltaY > 0 ? 0.98 : 1.02;
-  const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * zoomFactor));
-  
-  // Zoom towards mouse position
-  const scaleRatio = newScale / canvasTransform.scale;
-  canvasTransform.x = mouseX - (mouseX - canvasTransform.x) * scaleRatio;
-  canvasTransform.y = mouseY - (mouseY - canvasTransform.y) * scaleRatio;
-  canvasTransform.scale = newScale;
-  
-  updateCanvasTransform();
+  if (isTrackpad) {
+    // TRACKPAD: Check if user wants to zoom (Cmd/Ctrl held) or pan
+    if (e.ctrlKey || e.metaKey) {
+      // Cmd/Ctrl + trackpad scroll = ZOOM (pinch gesture)
+      const rect = canvasContainer.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      const zoomFactor = e.deltaY > 0 ? 0.98 : 1.02;
+      const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * zoomFactor));
+      
+      // Zoom towards mouse position
+      const scaleRatio = newScale / canvasTransform.scale;
+      canvasTransform.x = mouseX - (mouseX - canvasTransform.x) * scaleRatio;
+      canvasTransform.y = mouseY - (mouseY - canvasTransform.y) * scaleRatio;
+      canvasTransform.scale = newScale;
+      
+      updateCanvasTransform();
+    } else {
+      // Regular trackpad scroll = PAN (two-finger pan)
+      const panSpeed = 1.5; // Adjust sensitivity
+      canvasTransform.x -= e.deltaX * panSpeed;
+      canvasTransform.y -= e.deltaY * panSpeed;
+      updateCanvasTransform();
+    }
+  } else if (isTrackpad === false) {
+    // MOUSE WHEEL: Zoom behavior
+    const rect = canvasContainer.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const zoomFactor = e.deltaY > 0 ? 0.98 : 1.02;
+    const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * zoomFactor));
+    
+    // Zoom towards mouse position
+    const scaleRatio = newScale / canvasTransform.scale;
+    canvasTransform.x = mouseX - (mouseX - canvasTransform.x) * scaleRatio;
+    canvasTransform.y = mouseY - (mouseY - canvasTransform.y) * scaleRatio;
+    canvasTransform.scale = newScale;
+    
+    updateCanvasTransform();
+  }
 });
 
 // Pan with mouse drag on canvas background
