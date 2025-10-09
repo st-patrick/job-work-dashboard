@@ -89,6 +89,30 @@
   }
   .iconbtn:active{transform:translateY(0) scale(0.98)}
   .hidden{display:none!important}
+  
+  /* Fullscreen canvas styles */
+  body.canvas-fullscreen {
+    overflow: hidden;
+  }
+  body.canvas-fullscreen header,
+  body.canvas-fullscreen .universal-filters,
+  body.canvas-fullscreen .fab {
+    display: none !important;
+  }
+  body.canvas-fullscreen #view-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    padding: 0;
+    margin: 0;
+  }
+  body.canvas-fullscreen #canvasContainer {
+    width: 100vw !important;
+    height: 100vh !important;
+  }
 
   .panel{
     margin-top:20px;background:var(--panel);border:1px solid var(--border);
@@ -942,6 +966,7 @@
         <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities">🗂️</button>
         <button class="iconbtn" id="btnFitToContent" title="Fit to content">🔍</button>
         <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left">⤒</button>
+        <button class="iconbtn" id="btnCanvasFullscreen" title="Toggle fullscreen">⛶</button>
       </div>
     </div>
   </section>
@@ -2869,6 +2894,53 @@ el('#btnCreateCanvasFromTodos')?.addEventListener('click', () => {
   currentCanvasView = id;
   setTab('canvas');
   save();
+});
+
+// Toggle canvas fullscreen (both custom and browser fullscreen)
+el('#btnCanvasFullscreen')?.addEventListener('click', async () => {
+  const body = document.body;
+  const isFullscreen = body.classList.contains('canvas-fullscreen');
+  
+  if (isFullscreen) {
+    // Exit both custom and browser fullscreen
+    body.classList.remove('canvas-fullscreen');
+    el('#btnCanvasFullscreen').title = 'Toggle fullscreen';
+    
+    // Exit browser fullscreen
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  } else {
+    // Enter both custom and browser fullscreen
+    body.classList.add('canvas-fullscreen');
+    el('#btnCanvasFullscreen').title = 'Exit fullscreen';
+    
+    // Enter browser fullscreen
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch (err) {
+      console.warn('Could not enter browser fullscreen:', err);
+    }
+  }
+  
+  // Re-render canvas to adjust to new dimensions
+  setTimeout(() => {
+    renderCanvas();
+  }, 100);
+});
+
+// Listen for browser fullscreen changes (e.g., user presses ESC or F11)
+document.addEventListener('fullscreenchange', () => {
+  const body = document.body;
+  
+  // If browser exited fullscreen, also exit our custom fullscreen
+  if (!document.fullscreenElement && body.classList.contains('canvas-fullscreen')) {
+    body.classList.remove('canvas-fullscreen');
+    el('#btnCanvasFullscreen').title = 'Toggle fullscreen';
+    setTimeout(() => {
+      renderCanvas();
+    }, 100);
+  }
 });
 
 // Reset canvas view to top left
