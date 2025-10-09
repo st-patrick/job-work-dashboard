@@ -99,6 +99,26 @@
 
   .filters{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px}
   @media (max-width:800px){.filters{grid-template-columns:1fr 1fr}}
+  
+  /* Universal Filter Bar */
+  .universal-filters{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:14px;padding:10px 12px;margin-bottom:12px;
+    box-shadow:var(--shadow);
+  }
+  .filter-group{display:flex;flex-direction:column;gap:4px;min-width:140px}
+  .filter-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+  .filter-group input[type="text"],
+  .filter-group select{padding:8px 10px;font-size:14px;min-height:36px}
+  .filter-group input[type="checkbox"]{margin:0;cursor:pointer}
+  .checkbox-label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding-top:8px}
+  .checkbox-label span{font-size:14px;color:var(--fg);font-weight:500}
+  #btnClearFilters{margin-left:auto;align-self:flex-end;height:36px;font-size:12px}
+  @media (max-width:900px){
+    .filter-group{min-width:120px}
+    .universal-filters{gap:8px}
+  }
   select,input[type="text"],input[type="date"],textarea{
     width:100%;padding:12px 16px;border-radius:12px;
     border:1px solid var(--border);background:var(--card);color:var(--fg);
@@ -792,13 +812,62 @@
   </div>
 </header>
 
+<!-- Universal Filter Bar -->
+<div class="wrap" style="padding-top:8px;padding-bottom:0">
+  <div class="universal-filters">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="globalSearch" placeholder="Search anything…">
+    </div>
+    <div class="filter-group">
+      <label>Project</label>
+      <select id="globalProject">
+        <option value="">All projects</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Person</label>
+      <select id="globalPerson">
+        <option value="">All people</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select id="globalStatus">
+        <option value="">Any status</option>
+        <option value="todo">Todo</option>
+        <option value="in-progress">In Progress</option>
+        <option value="waiting">Waiting</option>
+        <option value="review">Review</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="globalDueToday">
+        <span>Due Today</span>
+      </label>
+    </div>
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="globalOverdue">
+        <span>Overdue</span>
+      </label>
+    </div>
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="globalShowArchived">
+        <span>Show Archived</span>
+      </label>
+    </div>
+    <button class="pill" id="btnClearFilters" title="Clear all filters">✕ Clear</button>
+  </div>
+</div>
+
 <main class="wrap">
   <!-- TODOS -->
   <section id="view-todos" class="panel">
     <div class="filters">
-      <div><label>Search</label><input type="text" id="fSearch" placeholder="Search anything…"></div>
-      <div><label>Project</label><select id="fProject"><option value="">All projects</option></select></div>
-      <div><label>Person</label><select id="fPerson"><option value="">All people</option></select></div>
       <div><label>Sort</label>
         <select id="fSort">
           <option value="created-desc">Created ↓</option>
@@ -815,10 +884,6 @@
     </div>
     <div class="toolbar">
       <span class="note" id="countInfo"></span>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
-        <input type="checkbox" id="fShowArchived" style="cursor:pointer">
-        <span class="tiny muted">Show archived</span>
-      </label>
     </div>
     <div class="list-todos" id="todoList"></div>
   </section>
@@ -1109,6 +1174,29 @@ const demoData=()=>({
   }
 });
 function dateStrOffset(days){const d=new Date(Date.now()+days*86400000);return d.toISOString().slice(0,10);} 
+
+// ====== SINGLE SOURCE OF TRUTH ======
+// These objects are derived from store data and provide a universal interface
+
+const STATUS_DEFINITIONS = [
+  { id: 'todo', label: 'Todo', order: 0 },
+  { id: 'in-progress', label: 'In Progress', order: 1 },
+  { id: 'waiting', label: 'Waiting', order: 2 },
+  { id: 'review', label: 'Review', order: 3 },
+  { id: 'done', label: 'Done', order: 4 }
+];
+
+// Universal computed data - this is what views consume
+// Contains filtered and sorted data based on global filters
+const viewData = {
+  todos: [],        // Filtered/sorted todos
+  projects: [],     // Filtered/sorted projects
+  people: [],       // Filtered/sorted people
+  statuses: [],     // Available statuses (derived from STATUS_DEFINITIONS)
+  projectsMap: {},  // Map of projectId -> project
+  peopleMap: {}     // Map of personId -> person
+};
+
 let store=load();
 function load(){try{const raw=localStorage.getItem(LS_KEY);if(!raw){const d=demoData();localStorage.setItem(LS_KEY,JSON.stringify(d));return structuredClone(d);}
   const data = JSON.parse(raw);
@@ -1171,17 +1259,13 @@ window.checkDataVersion = function() {
 };
 function nextId(){store.meta.lastId++;return String(store.meta.lastId);} 
 
-// Save and restore view state
+// Save and restore view state (now only sort remains in todos view)
 function saveViewState() {
   if (!store.current) store.current = {};
   if (!store.current.filters) store.current.filters = {};
   
   store.current.filters = {
-    search: fSearch.value || '',
-    project: fProject.value || '',
-    person: fPerson.value || '', 
-    sort: fSort.value || 'due-asc',
-    showArchived: fShowArchived?.checked || false
+    sort: fSort?.value || 'due-asc'
   };
   save();
 }
@@ -1190,14 +1274,10 @@ function restoreViewState() {
   if (!store.current?.filters) return;
   
   // Safety check - make sure filter elements exist
-  if (!fSearch || !fProject || !fPerson || !fSort || !fShowArchived) return;
+  if (!fSort) return;
   
   const filters = store.current.filters;
-  if (filters.search !== undefined) fSearch.value = filters.search;
-  if (filters.project !== undefined) fProject.value = filters.project;
-  if (filters.person !== undefined) fPerson.value = filters.person;
   if (filters.sort !== undefined) fSort.value = filters.sort;
-  if (filters.showArchived !== undefined) fShowArchived.checked = filters.showArchived;
 }
 
 function deleteTodo(id) {
@@ -1356,12 +1436,147 @@ el('#fileImport').addEventListener('change',e=>{const f=e.target.files[0]; if(!f
   };
   store=data; save(); render();}catch(err){alert('Import failed: '+err.message);}}; r.readAsText(f); e.target.value='';});
 
+/*** ====== UNIVERSAL FILTERS ====== ***/
+const globalSearch = el('#globalSearch');
+const globalProject = el('#globalProject');
+const globalPerson = el('#globalPerson');
+const globalStatus = el('#globalStatus');
+const globalDueToday = el('#globalDueToday');
+const globalOverdue = el('#globalOverdue');
+const globalShowArchived = el('#globalShowArchived');
+const btnClearFilters = el('#btnClearFilters');
+
+// Compute universal view data - single source of filtered/sorted data
+// This runs once per render cycle and all views consume this data
+function computeViewData() {
+  // Update derived maps
+  viewData.projectsMap = store.projects;
+  viewData.peopleMap = store.people;
+  viewData.statuses = STATUS_DEFINITIONS;
+  
+  // Start with all base data (unfiltered from store)
+  let todos = Object.values(store.todos);
+  let projects = Object.values(store.projects);
+  let people = Object.values(store.people);
+  
+  // Apply archived filter globally (unless explicitly showing archived)
+  if (!globalShowArchived.checked) {
+    todos = todos.filter(t => !t.archived);
+    projects = projects.filter(p => !p.archived);
+    people = people.filter(p => !p.archived);
+  }
+  
+  // Apply global filters
+  const searchTerm = globalSearch.value.trim().toLowerCase();
+  if (searchTerm) {
+    todos = todos.filter(t => universalHaystack(t).includes(searchTerm));
+    projects = projects.filter(p => (p.name || '').toLowerCase().includes(searchTerm));
+    people = people.filter(p => (p.name || '').toLowerCase().includes(searchTerm));
+  }
+  
+  // Project filter (only applies to todos)
+  const projectId = globalProject.value;
+  if (projectId) {
+    todos = todos.filter(t => t.projectId === projectId);
+  }
+  
+  // Person filter (only applies to todos)
+  const personId = globalPerson.value;
+  if (personId) {
+    todos = todos.filter(t => (t.people || []).includes(personId));
+  }
+  
+  // Status filter (only applies to todos)
+  const status = globalStatus.value;
+  if (status) {
+    todos = todos.filter(t => t.status === status);
+  }
+  
+  // Due Today filter (only applies to todos)
+  if (globalDueToday.checked) {
+    const today = new Date().toISOString().slice(0, 10);
+    todos = todos.filter(t => t.due === today);
+  }
+  
+  // Overdue filter (only applies to todos)
+  if (globalOverdue.checked) {
+    const today = new Date().setHours(0, 0, 0, 0);
+    todos = todos.filter(t => t.due && new Date(t.due) < today);
+  }
+  
+  // Store computed data
+  viewData.todos = todos;
+  viewData.projects = projects;
+  viewData.people = people;
+}
+
+// Legacy function for backwards compatibility - now just filters archived
+function applyGlobalFilters(items) {
+  if (!globalShowArchived.checked) {
+    return items.filter(item => !item.archived);
+  }
+  return items;
+}
+
+// Update global filter dropdowns from single source of truth
+function updateGlobalFilters() {
+  const curProj = globalProject.value;
+  const curPerson = globalPerson.value;
+  const curStatus = globalStatus.value;
+  
+  // Populate projects dropdown
+  globalProject.innerHTML = `<option value="">All projects</option>` + 
+    Object.values(store.projects)
+      .filter(p => !p.archived || globalShowArchived.checked)
+      .map(p => `<option value="${p.id}">${p.name}</option>`)
+      .join('');
+  
+  // Populate people dropdown
+  globalPerson.innerHTML = `<option value="">All people</option>` + 
+    Object.values(store.people)
+      .filter(p => !p.archived || globalShowArchived.checked)
+      .map(p => `<option value="${p.id}">${p.name}</option>`)
+      .join('');
+  
+  // Populate status dropdown from single source of truth
+  globalStatus.innerHTML = `<option value="">Any status</option>` + 
+    STATUS_DEFINITIONS
+      .map(s => `<option value="${s.id}">${s.label}</option>`)
+      .join('');
+  
+  // Restore previous selections
+  globalProject.value = curProj;
+  globalPerson.value = curPerson;
+  globalStatus.value = curStatus;
+}
+
+// Clear all filters
+btnClearFilters.onclick = () => {
+  globalSearch.value = '';
+  globalProject.value = '';
+  globalPerson.value = '';
+  globalStatus.value = '';
+  globalDueToday.checked = false;
+  globalOverdue.checked = false;
+  globalShowArchived.checked = false;
+  
+  // Re-render current view
+  render();
+};
+
+// Add event listeners to global filters - they trigger full re-render
+[globalSearch, globalProject, globalPerson, globalStatus, globalDueToday, globalOverdue, globalShowArchived].forEach(filter => {
+  filter.addEventListener(filter.type === 'checkbox' ? 'change' : 'input', () => {
+    render(); // Full re-render computes viewData and updates all views
+  });
+});
+
 /*** ====== TODOS VIEW ====== ***/
-const fSearch=el('#fSearch'), fProject=el('#fProject'), fPerson=el('#fPerson'), fSort=el('#fSort'), fShowArchived=el('#fShowArchived'), todoList=el('#todoList');
-[fSearch,fProject,fPerson,fSort,fShowArchived].forEach(c=>c.addEventListener('input',()=>{
+const fSort=el('#fSort'), todoList=el('#todoList');
+fSort.addEventListener('input',()=>{
   renderMainTodos();
   saveViewState();
-}));
+});
 
 const SORTS={
   'due-asc':(a,b)=> (a.due||'9999-12-31')<(b.due||'9999-12-31')?-1:1,
@@ -1375,28 +1590,11 @@ const SORTS={
   'created-desc':(a,b)=> (b.created||0)-(a.created||0),
 };
 
-function ensureFilterOptions(){
-  const curProj=fProject.value, curPerson=fPerson.value;
-  const projOpts = `<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  const peopleOpts = `<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  if(fProject.innerHTML!==projOpts) fProject.innerHTML = projOpts; if(fPerson.innerHTML!==peopleOpts) fPerson.innerHTML = peopleOpts; fProject.value=curProj; fPerson.value=curPerson;
-}
-
 function renderMainTodos() {
-  let items = Object.values(store.todos);
-  const q = fSearch.value.trim().toLowerCase();
-  if (q) { items = items.filter(t => universalHaystack(t).includes(q)); }
-  const proj = fProject.value;
-  if (proj) { items = items.filter(t => t.projectId === proj); }
-  const person = fPerson.value;
-  if (person) { items = items.filter(t => (t.people || []).includes(person)); }
+  // Use pre-filtered data from viewData
+  let items = [...viewData.todos];
   
-  // Filter archived todos based on checkbox
-  const showArchived = fShowArchived?.checked || false;
-  if (!showArchived) {
-    items = items.filter(t => !t.archived);
-  }
-
+  // Apply view-specific sorting
   const sorter = SORTS[fSort.value] || SORTS['due-asc'];
   items.sort(sorter);
   
@@ -1569,8 +1767,13 @@ el('#dlgProject').addEventListener('keydown', e => {
   }
 });
 function renderProjects(){
-  projectList.innerHTML=Object.values(store.projects).map(p=>{
-  const todos=(p.todoIds||[]).map(id=>store.todos[id]).filter(t=>t && !t.archived);
+  // Use pre-filtered projects from viewData
+  const projects = viewData.projects;
+  
+  projectList.innerHTML=projects.map(p=>{
+    // Get todos for this project from the filtered viewData
+    let todos = viewData.todos.filter(t => (p.todoIds || []).includes(t.id));
+    
     const inline = todos.map((t,i)=>`<span class="item"><span class="link" data-act="open" data-id="${t.id}">${t.title}</span></span>${i<todos.length-1?'<span class="sep">·</span>':''}`).join('');
     return `<div class="card" data-pid="${p.id}">
       <div class="cardhead">
@@ -1595,8 +1798,8 @@ function renderProjects(){
       if (projectId) {
         // Switch to todos view and filter by this project
         setTab('todos');
-        fProject.value = projectId;
-        renderTodos();
+        globalProject.value = projectId;
+        render();
       }
     }
   };
@@ -1776,8 +1979,11 @@ el('#dlgDeleteProject').addEventListener('keydown', e => {
 });
 function recomputeTodoPeople(todoId){const ids=Object.values(store.people).filter(p=>(p.waitingForMe||[]).includes(todoId)||(p.waitingForThem||[]).includes(todoId)).map(p=>p.id); const t=store.todos[todoId]; if(t) t.people=[...new Set(ids)];}
 function renderPeople(){
+  // Use pre-filtered people from viewData
+  let people = [...viewData.people];
+  
   // Sort people: most tasks first, no tasks last
-  const sortedPeople = Object.values(store.people).sort((a, b) => {
+  const sortedPeople = people.sort((a, b) => {
     const aTotal = (a.waitingForMe?.length || 0) + (a.waitingForThem?.length || 0);
     const bTotal = (b.waitingForMe?.length || 0) + (b.waitingForThem?.length || 0);
     
@@ -1790,8 +1996,10 @@ function renderPeople(){
   });
   
   peopleList.innerHTML=sortedPeople.map(p=>{
-    const waitingForMe = (p.waitingForMe || []).filter(id => store.todos[id] && !store.todos[id].archived);
-    const waitingForThem = (p.waitingForThem || []).filter(id => store.todos[id] && !store.todos[id].archived);
+    // Filter waiting lists to only include todos in viewData (respects global filters)
+    const viewTodoIds = new Set(viewData.todos.map(t => t.id));
+    const waitingForMe = (p.waitingForMe || []).filter(id => viewTodoIds.has(id));
+    const waitingForThem = (p.waitingForThem || []).filter(id => viewTodoIds.has(id));
     const totalTasks = waitingForMe.length + waitingForThem.length;
     
     const taskPill = (tid, side) => {
@@ -1879,17 +2087,17 @@ function renderKanban(){
   const isDefaultBoard = store.current.activeKanbanId === 'default';
   
   if (isDefaultBoard) {
-    // Special handling for the default board - show todos by status
-    const statusColumns = [
-      {id: 'todo', name: 'Todo', status: 'todo'},
-      {id: 'in-progress', name: 'In Progress', status: 'in-progress'},
-      {id: 'waiting', name: 'Waiting', status: 'waiting'},
-      {id: 'review', name: 'Review', status: 'review'},
-      {id: 'done', name: 'Done', status: 'done'}
-    ];
+    // Special handling for the default board - show todos by status using STATUS_DEFINITIONS
+    const statusColumns = STATUS_DEFINITIONS.map(s => ({
+      id: s.id,
+      name: s.label,
+      status: s.id
+    }));
     
     kanbanGrid.innerHTML = statusColumns.map(col => {
-      const todos = Object.values(store.todos).filter(t => t.status === col.status && (!filterProj || t.projectId === filterProj) && !t.archived);
+      // Use viewData filtered todos, then apply board-specific project filter
+      let todos = viewData.todos.filter(t => t.status === col.status && (!filterProj || t.projectId === filterProj));
+      
       const cards = todos.map(t => kanbanCard(t)).join('');
       return `<div class="column" data-col="${col.id}">
         <div class="colhead">
@@ -1907,7 +2115,11 @@ function renderKanban(){
     if (!kb) return;
     
     kanbanGrid.innerHTML=kb.columns.map(col=>{
-      const cards=col.todoIds.map(id=>store.todos[id]).filter(t=>t && !t.archived).filter(t=>!filterProj||t.projectId===filterProj).map(t=>kanbanCard(t)).join('');
+      // Use viewData filtered todos, then apply column and project filters
+      const columnTodoIds = new Set(col.todoIds);
+      let todos = viewData.todos.filter(t => columnTodoIds.has(t.id) && (!filterProj || t.projectId === filterProj));
+      
+      const cards = todos.map(t=>kanbanCard(t)).join('');
       return `<div class="column" data-col="${col.id}">
         <div class="colhead">
           <span contenteditable="true" spellcheck="false" data-act="renameCol" data-col="${col.id}" title="Click to rename">${col.name}</span>
@@ -2823,9 +3035,12 @@ function render(full = false) {
   views.forEach(id => el('#view-' + id).classList.toggle('hidden', currentTab !== id));
 
   if (full) {
-    ensureFilterOptions();
     restoreViewState();
   }
+  
+  // ALWAYS compute view data first - this is the single source of truth
+  updateGlobalFilters(); // Update filter dropdowns
+  computeViewData();     // Compute filtered data for all views
 
   switch (currentTab) {
     case 'todos':
