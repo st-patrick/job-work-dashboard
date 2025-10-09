@@ -884,6 +884,7 @@
     </div>
     <div class="toolbar">
       <span class="note" id="countInfo"></span>
+      <button class="pill action" id="btnCreateCanvasFromTodos" title="Create canvas from visible todos">📌 Create Canvas</button>
     </div>
     <div class="list-todos" id="todoList"></div>
   </section>
@@ -934,6 +935,7 @@
           <option value="default">Default Canvas</option>
         </select>
         <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view">＋</button>
+        <button class="iconbtn" id="btnDeleteCanvasView" title="Delete current canvas" style="display:none;background:var(--bad);color:#fff;border-color:transparent">🗑</button>
         <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas">📌</button>
         <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas">📁</button>
         <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
@@ -1202,7 +1204,11 @@ function load(){try{const raw=localStorage.getItem(LS_KEY);if(!raw){const d=demo
   const data = JSON.parse(raw);
   // Ensure backwards compatibility for view state
   if (!data.current) data.current = {};
-  if (!data.current.filters) data.current.filters = {search:'', project:'', person:'', sort:'due-asc'};
+  if (!data.current.filters) data.current.filters = {sort:'due-asc'};
+  if (!data.current.globalFilters) data.current.globalFilters = {
+    search: '', project: '', person: '', status: '', 
+    dueToday: false, overdue: false, showArchived: false
+  };
   if (!data.canvasViews) data.canvasViews = {
     default: { id: 'default', name: 'Default Canvas', entities: {} }
   };
@@ -1550,6 +1556,35 @@ function updateGlobalFilters() {
   globalStatus.value = curStatus;
 }
 
+// Save global filters to store
+function saveGlobalFilters() {
+  if (!store.current) store.current = {};
+  store.current.globalFilters = {
+    search: globalSearch.value,
+    project: globalProject.value,
+    person: globalPerson.value,
+    status: globalStatus.value,
+    dueToday: globalDueToday.checked,
+    overdue: globalOverdue.checked,
+    showArchived: globalShowArchived.checked
+  };
+  save();
+}
+
+// Restore global filters from store
+function restoreGlobalFilters() {
+  if (!store.current?.globalFilters) return;
+  
+  const gf = store.current.globalFilters;
+  if (gf.search !== undefined) globalSearch.value = gf.search;
+  if (gf.project !== undefined) globalProject.value = gf.project;
+  if (gf.person !== undefined) globalPerson.value = gf.person;
+  if (gf.status !== undefined) globalStatus.value = gf.status;
+  if (gf.dueToday !== undefined) globalDueToday.checked = gf.dueToday;
+  if (gf.overdue !== undefined) globalOverdue.checked = gf.overdue;
+  if (gf.showArchived !== undefined) globalShowArchived.checked = gf.showArchived;
+}
+
 // Clear all filters
 btnClearFilters.onclick = () => {
   globalSearch.value = '';
@@ -1560,13 +1595,14 @@ btnClearFilters.onclick = () => {
   globalOverdue.checked = false;
   globalShowArchived.checked = false;
   
-  // Re-render current view
+  saveGlobalFilters();
   render();
 };
 
-// Add event listeners to global filters - they trigger full re-render
+// Add event listeners to global filters - they trigger full re-render and save state
 [globalSearch, globalProject, globalPerson, globalStatus, globalDueToday, globalOverdue, globalShowArchived].forEach(filter => {
   filter.addEventListener(filter.type === 'checkbox' ? 'change' : 'input', () => {
+    saveGlobalFilters();
     render(); // Full re-render computes viewData and updates all views
   });
 });
@@ -1947,10 +1983,11 @@ const deleteProjectHandler = e => {
       renderTodos();
       renderKanban();
       
-      // Clear project filter if it was set to the deleted project
-      if (fProject.value === projectId) {
-        fProject.value = '';
-        renderTodos();
+      // Clear global project filter if it was set to the deleted project
+      if (globalProject.value === projectId) {
+        globalProject.value = '';
+        saveGlobalFilters();
+        render();
       }
     }
   }
@@ -2307,7 +2344,7 @@ function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
   dlgTodo.showModal(); 
 }
 function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); tProject.innerHTML=opts; el('#aProject').innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#kbProject').innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
-function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; fPerson.innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
+function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
 const saveTodoHandler = e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const archived = isEdit ? store.todos[id].archived || false : false; const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now(), archived }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
@@ -2412,8 +2449,8 @@ const CMDS=[
   {label:'Export backup', run:()=>exportBackup()},
   {label:'Import backup', run:()=>el('#fileImport').click()},
   {label:'Recover from auto-backup', run:()=>recoverAutoBackup()},
-  {label:'Filter status: todo', run:()=>{ setTab('todos'); fSort.value='due-asc'; fPerson.value=''; fProject.value=''; fSearch.value=''; renderTodos(); }},
-  {label:'Focus search', run:()=>{ setTab('todos'); fSearch.focus(); }},
+  {label:'Clear all filters', run:()=>{ btnClearFilters.click(); }},
+  {label:'Focus search', run:()=>{ setTab('todos'); globalSearch.focus(); }},
 ];
 let ksel=0; function openK(){ kbar.classList.add('open'); kbar.setAttribute('aria-hidden','false'); kinput.value=''; renderK(''); kinput.focus(); }
 function closeK(){ kbar.classList.remove('open'); kbar.setAttribute('aria-hidden','true'); }
@@ -2635,6 +2672,12 @@ function updateCanvasViewSelector() {
   select.innerHTML = views.map(v => 
     `<option value="${v.id}" ${v.id === currentCanvasView ? 'selected' : ''}>${v.name}</option>`
   ).join('');
+  
+  // Show/hide delete button based on whether it's the default canvas
+  const deleteBtn = el('#btnDeleteCanvasView');
+  if (deleteBtn) {
+    deleteBtn.style.display = currentCanvasView === 'default' ? 'none' : 'grid';
+  }
 }
 
 function updateCanvasTransform() {
@@ -2745,6 +2788,13 @@ el('#btnAddAllTodos')?.addEventListener('click', () => {
 el('#canvasViewSelect')?.addEventListener('change', (e) => {
   currentCanvasView = e.target.value;
   canvasTransform = { x: 0, y: 0, scale: 1 }; // Reset transform on view change
+  
+  // Update delete button visibility
+  const deleteBtn = el('#btnDeleteCanvasView');
+  if (deleteBtn) {
+    deleteBtn.style.display = currentCanvasView === 'default' ? 'none' : 'grid';
+  }
+  
   renderCanvas();
 });
 
@@ -2762,6 +2812,63 @@ el('#btnAddCanvasView')?.addEventListener('click', () => {
   currentCanvasView = id;
   save();
   renderCanvas();
+});
+
+// Delete canvas view (except default)
+el('#btnDeleteCanvasView')?.addEventListener('click', () => {
+  if (currentCanvasView === 'default') {
+    alert('Cannot delete the default canvas');
+    return;
+  }
+  
+  const view = store.canvasViews[currentCanvasView];
+  if (!view) return;
+  
+  if (!confirm(`Delete canvas "${view.name}"?`)) return;
+  
+  delete store.canvasViews[currentCanvasView];
+  currentCanvasView = 'default';
+  save();
+  renderCanvas();
+});
+
+// Create canvas from visible todos in todos view
+el('#btnCreateCanvasFromTodos')?.addEventListener('click', () => {
+  const name = prompt('Canvas name:', 'Filtered Todos');
+  if (!name) return;
+  
+  // Get currently visible todos from viewData
+  const visibleTodos = [...viewData.todos];
+  
+  if (visibleTodos.length === 0) {
+    alert('No todos to add to canvas. Adjust your filters to show todos.');
+    return;
+  }
+  
+  const id = 'canvas_' + Date.now();
+  const entities = {};
+  
+  // Arrange todos in a grid
+  const cols = Math.ceil(Math.sqrt(visibleTodos.length));
+  visibleTodos.forEach((todo, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    entities[`todo:${todo.id}`] = {
+      x: col * 300 + 50,
+      y: row * 200 + 50
+    };
+  });
+  
+  store.canvasViews[id] = {
+    id,
+    name,
+    entities
+  };
+  
+  // Switch to canvas view and select the new canvas
+  currentCanvasView = id;
+  setTab('canvas');
+  save();
 });
 
 // Reset canvas view to top left
@@ -3036,6 +3143,7 @@ function render(full = false) {
 
   if (full) {
     restoreViewState();
+    restoreGlobalFilters();
   }
   
   // ALWAYS compute view data first - this is the single source of truth
