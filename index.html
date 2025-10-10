@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Job Work Dashboard Manager</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
   :root{
     --bg:#f8f9fa; --panel:#ffffff; --card:#ffffff; --fg:#1d1d1f; --muted:#86868b;
@@ -112,6 +113,51 @@
   body.canvas-fullscreen #canvasContainer {
     width: 100vw !important;
     height: 100vh !important;
+  }
+
+  /* Canvas Toolbar Styling */
+  .canvas-toolbar-floating {
+    background: #e85b5b !important;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  
+  .canvas-toolbar-floating .iconbtn {
+    background: #d9feaf !important;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: #000000 !important;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+  }
+  
+  .canvas-toolbar-floating .iconbtn:hover {
+    background: #c8f49f !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .canvas-toolbar-floating .iconbtn:active {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  .canvas-toolbar-floating .iconbtn.delete-btn {
+    background: #ff6b6b !important;
+    color: white !important;
+  }
+  
+  .canvas-toolbar-floating .iconbtn.delete-btn:hover {
+    background: #ff5252 !important;
+  }
+  
+  .canvas-toolbar-floating select {
+    background: #d9feaf;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: #000000;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
   }
 
   .panel{
@@ -954,19 +1000,19 @@
     <div id="canvasContainer" style="position:relative;width:100%;height:calc(100vh - 80px);border-radius:0;box-shadow:none;padding:0;margin:0;background:var(--bg-secondary);border:none;">
       <canvas id="mainCanvas" width="1200" height="800" style="display:block;width:100%;height:100%;background:radial-gradient(circle at 20px 20px, var(--muted) 1px, transparent 1px);background-size:40px 40px;"></canvas>
       <div class="canvas-viewport" id="canvasViewport"></div>
-      <div class="canvas-toolbar-floating" style="position:absolute;top:24px;right:24px;z-index:10;display:flex;gap:12px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow-float);padding:12px 20px;">
+      <div class="canvas-toolbar-floating" style="position:absolute;top:24px;right:24px;z-index:10;display:flex;gap:12px;align-items:center;border-radius:16px;box-shadow:var(--shadow-float);padding:12px 20px;">
         <select id="canvasViewSelect">
           <option value="default">Default Canvas</option>
         </select>
-        <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view">＋</button>
-        <button class="iconbtn" id="btnDeleteCanvasView" title="Delete current canvas" style="display:none;background:var(--bad);color:#fff;border-color:transparent">🗑</button>
-        <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas">📌</button>
-        <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas">📁</button>
-        <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos">🍂</button>
-        <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities">🗂️</button>
-        <button class="iconbtn" id="btnFitToContent" title="Fit to content">🔍</button>
-        <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left">⤒</button>
-        <button class="iconbtn" id="btnCanvasFullscreen" title="Toggle fullscreen">⛶</button>
+        <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view"><i class="fas fa-plus"></i></button>
+        <button class="iconbtn delete-btn" id="btnDeleteCanvasView" title="Delete current canvas" style="display:none;"><i class="fas fa-trash"></i></button>
+        <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas"><i class="fas fa-thumbtack"></i></button>
+        <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas"><i class="fas fa-folder"></i></button>
+        <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos"><i class="fas fa-layer-group"></i></button>
+        <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities"><i class="fas fa-object-group"></i></button>
+        <button class="iconbtn" id="btnFitToContent" title="Fit to content"><i class="fas fa-compress-arrows-alt"></i></button>
+        <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left"><i class="fas fa-home"></i></button>
+        <button class="iconbtn" id="btnCanvasFullscreen" title="Toggle fullscreen"><i class="fas fa-expand"></i></button>
       </div>
     </div>
   </section>
