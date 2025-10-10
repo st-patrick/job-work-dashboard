@@ -77,14 +77,14 @@
   .rightbar{display:flex;align-items:center;gap:8px}
   .iconbtn{
     min-width:var(--tap);height:var(--tap);border-radius:14px;
-    border:1px solid var(--border);background:var(--panel);
+    border:1px solid rgba(0,0,0,0.1);background:#d9feaf;
     display:grid;place-items:center;box-shadow:var(--shadow-light);
-    font-size:18px;color:var(--fg);
+    font-size:18px;color:#000;
     transition:all 0.2s var(--transition);
   }
   .iconbtn:hover{
-    background:color-mix(in oklab,var(--panel) 90%,var(--acc));
-    border-color:color-mix(in oklab,var(--acc) 30%,transparent);
+    background:#c8f49f;
+    border-color:rgba(0,0,0,0.15);
     transform:translateY(-1px);
     box-shadow:var(--shadow-medium);
   }
@@ -233,11 +233,12 @@
   }
   .pill{
     display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
-    border-radius:20px;background:var(--card);border:1px solid var(--border);
+    border-radius:20px;background:#d9feaf;border:1px solid rgba(0,0,0,0.1);
     font-size:13px;font-weight:var(--font-weight-medium);
     transition:all 0.2s var(--transition);
+    color:#000;
   }
-  .pill:hover{background:color-mix(in oklab,var(--card) 90%,var(--acc));border-color:var(--acc)}
+  .pill:hover{background:#c8f49f;border-color:rgba(0,0,0,0.15);transform:translateY(-1px)}
   .pill .dot{width:8px;height:8px;border-radius:999px;background:currentColor}
   .badge{
     font-size:13px;padding:6px 12px;border-radius:16px;
@@ -252,14 +253,19 @@
   .status-done{background:color-mix(in oklab,var(--ok) 15%,transparent);color:var(--ok)}
   .muted{color:var(--muted)} 
   .note{font-size:13px;color:var(--muted);font-weight:var(--font-weight-regular)}
-  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+  .toolbar{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px;
+    background:#e85b5b;padding:12px 20px;border-radius:16px;
+    box-shadow:var(--shadow-medium);
+  }
+  .toolbar .note{color:rgba(255,255,255,0.9)}
   .action{
-    background:var(--acc)!important;color:#fff!important;
-    border-color:transparent!important;
+    background:#d9feaf!important;color:#000!important;
+    border-color:rgba(0,0,0,0.1)!important;
     box-shadow:var(--shadow-medium);
   }
   .action:hover{
-    background:color-mix(in oklab,var(--acc) 85%,#000)!important;
+    background:#c8f49f!important;
     transform:translateY(-1px);
     box-shadow:var(--shadow-heavy);
   }
@@ -546,6 +552,7 @@
     align-items:end;
     gap:24px;
     flex-wrap:wrap;
+    background:#e85b5b !important;
   }
   
   .kanban-toolbar-group{
@@ -564,13 +571,17 @@
   .kanban-control label{
     font-size:12px;
     font-weight:var(--font-weight-medium);
-    color:var(--muted);
+    color:rgba(255,255,255,0.9);
     margin-bottom:0;
   }
   
   .kanban-control select{
     font-size:14px;
     padding:8px 12px;
+    background:#d9feaf;
+    color:#000;
+    border:1px solid rgba(0,0,0,0.1);
+    border-radius:8px;
   }
   
   @media (max-width:640px){
@@ -648,14 +659,15 @@
   .fab{
     position:fixed;right:24px;bottom:24px;z-index:20;
     width:64px;height:64px;border-radius:20px;
-    background:linear-gradient(135deg,var(--acc) 0%, #5856d6 100%);
-    color:#fff;border:none;box-shadow:var(--shadow-float);
+    background:#d9feaf;
+    color:#000;border:2px solid rgba(0,0,0,0.1);box-shadow:var(--shadow-float);
     font-size:32px;display:grid;place-items:center;
     transition:all 0.3s var(--transition);
   }
   .fab:hover{
     transform:translateY(-4px) scale(1.05);
-    box-shadow:0 20px 50px rgba(0,122,255,0.4);
+    box-shadow:0 20px 50px rgba(217,254,175,0.6);
+    background:#c8f49f;
   }
   .fab:active{transform:translateY(-2px) scale(1.02)}
 
@@ -930,7 +942,7 @@
         <span>Show Archived</span>
       </label>
     </div>
-    <button class="pill" id="btnClearFilters" title="Clear all filters">✕ Clear</button>
+    <button class="pill" id="btnClearFilters" title="Clear all filters"><i class="fas fa-times"></i> Clear</button>
   </div>
 </div>
 
@@ -954,21 +966,21 @@
     </div>
     <div class="toolbar">
       <span class="note" id="countInfo"></span>
-      <button class="pill action" id="btnCreateCanvasFromTodos" title="Create canvas from visible todos">📌 Create Canvas</button>
+      <button class="pill action" id="btnCreateCanvasFromTodos" title="Create canvas from visible todos"><i class="fas fa-project-diagram"></i> Create Canvas</button>
     </div>
     <div class="list-todos" id="todoList"></div>
   </section>
 
   <!-- PROJECTS -->
   <section id="view-projects" class="panel hidden">
-    <div class="toolbar"><button class="iconbtn action" id="btnAddProject" title="Add project">＋</button>
+    <div class="toolbar"><button class="iconbtn action" id="btnAddProject" title="Add project"><i class="fas fa-plus"></i></button>
       <span class="note">Inline, ultra-compact todos per project.</span></div>
     <div class="list" id="projectList"></div>
   </section>
 
   <!-- PEOPLE -->
   <section id="view-people" class="panel hidden">
-    <div class="toolbar"><button class="iconbtn action" id="btnAddPerson" title="Add person">＋</button>
+    <div class="toolbar"><button class="iconbtn action" id="btnAddPerson" title="Add person"><i class="fas fa-plus"></i></button>
       <span class="note">Attach existing tasks; tap × to remove.</span></div>
     <div class="list" id="peopleList"></div>
   </section>
@@ -981,14 +993,14 @@
           <label class="tiny muted">Board</label>
           <select id="kbSelect"></select>
         </div>
-        <button class="iconbtn" id="btnEditBoard" title="Edit board">⚙️</button>
+        <button class="iconbtn" id="btnEditBoard" title="Edit board"><i class="fas fa-cog"></i></button>
       </div>
       <div class="kanban-toolbar-group">
         <div class="kanban-control">
           <label class="tiny muted">Filter by project</label>
           <select id="kbProject"><option value="">All</option></select>
         </div>
-        <button class="iconbtn action" id="btnAddBoard" title="New board">＋</button>
+        <button class="iconbtn action" id="btnAddBoard" title="New board"><i class="fas fa-plus"></i></button>
       </div>
     </div>
     <div class="grid-boards" id="kanbanGrid"></div>
@@ -1006,10 +1018,10 @@
         </select>
         <button class="iconbtn action" id="btnAddCanvasView" title="Add canvas view"><i class="fas fa-plus"></i></button>
         <button class="iconbtn delete-btn" id="btnDeleteCanvasView" title="Delete current canvas" style="display:none;"><i class="fas fa-trash"></i></button>
-        <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas"><i class="fas fa-thumbtack"></i></button>
+        <button class="iconbtn" id="btnAddTodoToCanvas" title="Add todo to canvas"><i class="fas fa-sticky-note"></i></button>
         <button class="iconbtn" id="btnAddProjectToCanvas" title="Add project to canvas"><i class="fas fa-folder"></i></button>
-        <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos"><i class="fas fa-layer-group"></i></button>
-        <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities"><i class="fas fa-object-group"></i></button>
+        <button class="iconbtn" id="btnAddAllTodos" title="Add all remaining todos"><i class="fas fa-list-check"></i></button>
+        <button class="iconbtn" id="btnArrangeEntities" title="Auto-arrange entities"><i class="fas fa-grip-vertical"></i></button>
         <button class="iconbtn" id="btnFitToContent" title="Fit to content"><i class="fas fa-compress-arrows-alt"></i></button>
         <button class="iconbtn" id="btnCanvasReset" title="Reset view to top left"><i class="fas fa-home"></i></button>
         <button class="iconbtn" id="btnCanvasFullscreen" title="Toggle fullscreen"><i class="fas fa-expand"></i></button>
@@ -1018,7 +1030,7 @@
   </section>
 </main>
 
-<button class="fab" id="fabAdd" title="Add todo">＋</button>
+<button class="fab" id="fabAdd" title="Add todo"><i class="fas fa-plus"></i></button>
 
 <!-- MODAL: ADD/EDIT TODO -->
 <dialog id="dlgTodo">
@@ -1051,11 +1063,11 @@
       <div><label>They’re waiting on me… (multi-select)</label><select id="selWaitingOnMe" multiple size="6"></select>
         <div class="tiny muted" style="margin-top:4px">💡 Ctrl+click to deselect items · <button type="button" id="btnClearWaitingOnMe" style="background:none;border:none;color:var(--acc);cursor:pointer;font-size:11px">Clear all</button></div></div>
     </div>
-    <div class="toolbar" style="justify-content:space-between">
+    <div class="toolbar" style="justify-content:space-between;background:transparent;padding:0;margin-top:20px">
       <div style="display:flex;gap:8px">
-        <button id="btnArchiveTodo" type="button" class="pill" style="background:var(--muted);color:#fff;border-color:transparent;">🗄 Archive</button>
-        <button id="btnUnarchiveTodo" type="button" class="pill" style="background:var(--ok);color:#fff;border-color:transparent;display:none">↩ Unarchive</button>
-        <button id="btnDeleteTodo" type="button" class="pill" style="background:var(--bad);color:#fff;border-color:transparent;display:none">🗑 Delete</button>
+        <button id="btnArchiveTodo" type="button" class="pill" style="background:#6c757d;color:#fff;border-color:transparent;"><i class="fas fa-archive"></i> Archive</button>
+        <button id="btnUnarchiveTodo" type="button" class="pill" style="background:#30d158;color:#fff;border-color:transparent;display:none"><i class="fas fa-undo"></i> Unarchive</button>
+        <button id="btnDeleteTodo" type="button" class="pill" style="background:#ff3b30;color:#fff;border-color:transparent;display:none"><i class="fas fa-trash"></i> Delete</button>
       </div>
       <div style="display:flex;gap:8px">
         <button value="cancel" class="pill">Cancel</button>
@@ -1886,8 +1898,8 @@ function renderProjects(){
       <div class="cardhead">
         <div class="cardtitle"><span class="pill" style="background:${p.color};color:#000;border-color:transparent">●</span> <span class="project-name" contenteditable="true" spellcheck="false" data-act="editProjectName" data-pid="${p.id}" title="Click to edit project name">${p.name}</span></div>
         <div style="display:flex;gap:6px">
-          <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here">＋</button>
-          <button class="iconbtn" data-pid="${p.id}" data-act="deleteProject" title="Delete project" style="background:var(--bad);color:#fff;border-color:transparent">🗑</button>
+          <button class="iconbtn action" data-pid="${p.id}" data-act="addToProject" title="Add todo here"><i class="fas fa-plus"></i></button>
+          <button class="iconbtn" data-pid="${p.id}" data-act="deleteProject" title="Delete project" style="background:#ff3b30;color:#fff;border-color:transparent"><i class="fas fa-trash"></i></button>
         </div>
       </div>
       <div class="inline-list">${inline || '<span class="note">No todos yet.</span>'}</div>
@@ -2232,9 +2244,9 @@ function renderKanban(){
         <div class="colhead">
           <span contenteditable="true" spellcheck="false" data-act="renameCol" data-col="${col.id}" title="Click to rename">${col.name}</span>
           <div class="coltools">
-            <button class="pill action" data-col="${col.id}" data-act="attachToCol" title="Attach existing">＋</button>
-            <button class="pill action" data-col="${col.id}" data-act="newToCol" title="New todo here">✚</button>
-            <button class="pill" data-col="${col.id}" data-act="deleteCol" title="Delete column">🗑</button>
+            <button class="pill action" data-col="${col.id}" data-act="attachToCol" title="Attach existing"><i class="fas fa-plus"></i></button>
+            <button class="pill action" data-col="${col.id}" data-act="newToCol" title="New todo here"><i class="fas fa-file-medical"></i></button>
+            <button class="pill" data-col="${col.id}" data-act="deleteCol" title="Delete column" style="background:#ff3b30;color:#fff"><i class="fas fa-trash"></i></button>
           </div>
         </div>
         <div class="dropzone" data-col="${col.id}">${cards||'<div class="note">Drop here…</div>'}</div>
@@ -2356,7 +2368,7 @@ kanbanGrid.addEventListener('click',e=>{
 
 function openBoardEditor(){ 
   if (store.current.activeKanbanId === 'default') return; // Can't edit default board
-  const kb=store.kanbans[store.current.activeKanbanId]; if(!kb) return; el('#bName').value=kb.name; const holder=el('#bCols'); holder.innerHTML = kb.columns.map(c=> `<div class="row" data-col="${c.id}"><div><input type="text" value="${c.name}" data-act="colName"></div><div><button class="pill" data-act="colUp">↑</button> <button class="pill" data-act="colDown">↓</button> <button class="pill" data-act="colDel">🗑</button></div></div>`).join(''); el('#dlgBoard').showModal();
+  const kb=store.kanbans[store.current.activeKanbanId]; if(!kb) return; el('#bName').value=kb.name; const holder=el('#bCols'); holder.innerHTML = kb.columns.map(c=> `<div class="row" data-col="${c.id}"><div><input type="text" value="${c.name}" data-act="colName"></div><div><button class="pill" data-act="colUp"><i class="fas fa-arrow-up"></i></button> <button class="pill" data-act="colDown"><i class="fas fa-arrow-down"></i></button> <button class="pill" data-act="colDel" style="background:#ff3b30;color:#fff"><i class="fas fa-trash"></i></button></div></div>`).join(''); el('#dlgBoard').showModal();
 }
 el('#btnAddCol').onclick=()=>{ const kb=store.kanbans[store.current.activeKanbanId]; const id='col-'+nextId(); kb.columns.push({id,name:'New Column',todoIds:[]}); save(); openBoardEditor(); };
 const saveBoardHandler = (e)=>{ e.preventDefault(); const kb=store.kanbans[store.current.activeKanbanId]; kb.name = el('#bName').value.trim()||kb.name; // names
