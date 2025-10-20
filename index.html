@@ -1369,6 +1369,56 @@ function restoreViewState() {
   if (filters.sort !== undefined) fSort.value = filters.sort;
 }
 
+function commitActiveInlineEdits() {
+  const active = document.activeElement;
+  if (!active || !active.dataset) return;
+  const { act } = active.dataset;
+
+  if (act === 'editTitle') {
+    const id = active.dataset.id;
+    const todo = id ? store.todos[id] : null;
+    if (!todo) return;
+    const nextTitle = active.textContent.trim();
+    if (!nextTitle) {
+      active.textContent = todo.title || '';
+      return;
+    }
+    if (nextTitle !== todo.title) {
+      todo.title = nextTitle;
+      save();
+    }
+  } else if (act === 'editProjectName') {
+    const projectId = active.dataset.pid;
+    const project = projectId ? store.projects[projectId] : null;
+    if (!project) return;
+    const nextName = active.textContent.trim();
+    if (!nextName) {
+      active.textContent = project.name || '';
+      return;
+    }
+    if (nextName !== project.name) {
+      project.name = nextName;
+      save();
+    }
+  } else if (act === 'renameCol') {
+    const board = store.kanbans[store.current.activeKanbanId];
+    if (!board) return;
+    const colId = active.dataset.col;
+    const column = board.columns?.find(c => c.id === colId);
+    if (!column) return;
+    const nextLabel = active.textContent.trim();
+    if (!nextLabel) {
+      active.textContent = column.name || '';
+      return;
+    }
+    if (nextLabel !== column.name) {
+      column.name = nextLabel;
+      save();
+    }
+  }
+}
+  
+
 function deleteTodo(id) {
   if (!id || !store.todos[id]) return false;
   
@@ -3318,6 +3368,7 @@ function arrangeInGrid() {
 
 /*** ====== INIT & RENDER ====== ***/
 function render(full = false) {
+  commitActiveInlineEdits();
   const currentTab = store.current.tab;
   els('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === currentTab));
   views.forEach(id => el('#view-' + id).classList.toggle('hidden', currentTab !== id));
