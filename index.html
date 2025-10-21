@@ -344,11 +344,14 @@
   }
   
   .todoRow .title{
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:inline-block;
+    min-width:140px;
+    max-width:clamp(18ch, 36vw, 48ch);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
     font-weight:var(--font-weight-semibold);font-size:15px;
     line-height:1.4;
-    display:inline-block;
-    min-width:fit-content;
     cursor:text;
   }
   .todoRow .title[contenteditable="true"]{
@@ -359,7 +362,18 @@
     outline:2px solid var(--acc);
     background:color-mix(in oklab,var(--acc) 8%, transparent);
     box-shadow:0 0 0 4px color-mix(in oklab,var(--acc) 15%,transparent);
+    white-space:normal;
+    overflow:auto;
+    max-height:8.5em;
   }
+  .title-ellipsis{
+    display:none;
+    margin-left:4px;
+    font-weight:var(--font-weight-semibold);
+    color:var(--muted);
+  }
+  .title-cell.has-long-title .title-ellipsis{display:inline-flex;}
+  .title-cell.editing .title-ellipsis{display:none;}
   
   .meta-text{
     font-size:13px;
@@ -1381,12 +1395,19 @@ function commitActiveInlineEdits() {
     const nextTitle = active.textContent.trim();
     if (!nextTitle) {
       active.textContent = todo.title || '';
+      active.setAttribute('title', todo.title || '');
+      setTitleEditingState(active, false);
+      applyTitleOverflowState(active, todo.title || '');
       return;
     }
     if (nextTitle !== todo.title) {
       todo.title = nextTitle;
       save();
     }
+    active.textContent = todo.title || '';
+    active.setAttribute('title', todo.title || '');
+    setTitleEditingState(active, false);
+    applyTitleOverflowState(active, todo.title || '');
   } else if (act === 'editProjectName') {
     const projectId = active.dataset.pid;
     const project = projectId ? store.projects[projectId] : null;
@@ -1466,6 +1487,25 @@ const universalHaystack=t=>{
   const people=(t.people||[]).map(id=>store.people[id]?.name).filter(Boolean).join(' ');
   return [t.title,t.notes,(t.tags||[]).join(' '),t.status,score(t),t.id,t.due,projName(t),people].join(' ').toLowerCase();
 };
+const TITLE_MAX_LEN = 80;
+const escapeHtml = str=>String(str??'').replace(/[&<>"']/g,c=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+}[c]||c));
+function setTitleEditingState(target, editing){
+  const cell = target?.closest?.('.title-cell');
+  if(!cell) return;
+  cell.classList.toggle('editing', !!editing);
+}
+function applyTitleOverflowState(target, fullTitle=''){
+  const cell = target?.closest?.('.title-cell');
+  if(!cell) return;
+  const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
+  cell.classList.toggle('has-long-title', isLong);
+}
 
 /*** ====== NAV + IO ====== ***/
 const tabs=el('#tabs');
@@ -1783,6 +1823,11 @@ function renderMainTodos() {
     const project = store.projects[t.projectId];
     const archivedStyle = t.archived ? 'style="opacity:0.5"' : '';
     const archivedBadge = t.archived ? '<span class="badge" style="background:var(--muted);color:#fff;margin-left:8px">🗄 Archived</span>' : '';
+    const fullTitle = t.title || '';
+    const safeFullTitle = escapeHtml(fullTitle);
+  const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
+  const titleCellClasses = ['title-cell'];
+  if (isLong) titleCellClasses.push('has-long-title');
     
     return `<div class="todoRow" data-id="${t.id}" ${archivedStyle}>
       <div class="hiu" data-id="${t.id}">
@@ -1790,8 +1835,9 @@ function renderMainTodos() {
         <span class="d i ${t.eisen?.important ? 'on' : ''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${t.eisen?.urgent ? 'on' : ''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-      <div class="title-cell">
-        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit title">${t.title}</span>
+  <div class="${titleCellClasses.join(' ')}">
+  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+  <span class="title-ellipsis" aria-hidden="true">...</span>
         ${archivedBadge}
       </div>
       <div class="meta-text">${t.status}</div>
@@ -1829,6 +1875,17 @@ function renderMainTodos() {
       e.target.blur();
     }
   });
+  todoList.addEventListener('focus', (e) => {
+    if (e.target.dataset.act === 'editTitle') {
+      const id = e.target.dataset.id;
+      if (!id) return;
+      const fullTitle = store.todos[id]?.title || '';
+      e.target.textContent = fullTitle;
+      e.target.setAttribute('title', fullTitle);
+      setTitleEditingState(e.target, true);
+      applyTitleOverflowState(e.target, fullTitle);
+    }
+  }, true);
   
   todoList.addEventListener('blur', (e) => {
     if (e.target.dataset.act === 'editTitle') {
@@ -1836,6 +1893,11 @@ function renderMainTodos() {
       const v = e.target.textContent.trim();
       store.todos[id].title = v || store.todos[id].title;
       save();
+      const fullTitle = store.todos[id]?.title || '';
+      e.target.textContent = fullTitle;
+      e.target.setAttribute('title', fullTitle);
+      setTitleEditingState(e.target, false);
+      applyTitleOverflowState(e.target, fullTitle);
     }
   }, true);
 }
@@ -1853,6 +1915,11 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
     const project = store.projects[t.projectId];
     const people = (t.people || []).map(pid => store.people[pid]).filter(Boolean);
     const tags = (t.tags || []).map(tag => `<span class="pill" style="background:var(--acc);color:#fff;border-color:transparent">${tag}</span>`).join(' ');
+  const fullTitle = t.title || '';
+  const safeFullTitle = escapeHtml(fullTitle);
+  const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
+  const titleCellClasses = ['title-cell'];
+  if (isLong) titleCellClasses.push('has-long-title');
     
     return `<div class="todoRow" data-id="${t.id}">
       <div class="hiu" data-id="${t.id}">
@@ -1860,8 +1927,9 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
         <span class="d i ${t.eisen?.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${t.eisen?.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-      <div class="title-cell">
-        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="Click to edit title">${t.title}</span>
+      <div class="${titleCellClasses.join(' ')}">
+  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+  <span class="title-ellipsis" aria-hidden="true">...</span>
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
@@ -1920,7 +1988,30 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
   };
   // inline title edit
   container.addEventListener('keydown', (e)=>{ if(e.target.dataset.act==='editTitle' && e.key==='Enter'){ e.preventDefault(); e.target.blur(); }});
-  container.addEventListener('blur', (e)=>{ if(e.target.dataset.act==='editTitle'){ const id=e.target.dataset.id; const v=e.target.textContent.trim(); store.todos[id].title=v||store.todos[id].title; save(); } }, true);
+  container.addEventListener('focus', (e)=>{
+    if(e.target.dataset.act==='editTitle'){
+      const id=e.target.dataset.id;
+      if(!id) return;
+      const fullTitle = store.todos[id]?.title || '';
+      e.target.textContent = fullTitle;
+      e.target.setAttribute('title', fullTitle);
+      setTitleEditingState(e.target, true);
+      applyTitleOverflowState(e.target, fullTitle);
+    }
+  }, true);
+  container.addEventListener('blur', (e)=>{
+    if(e.target.dataset.act==='editTitle'){
+      const id=e.target.dataset.id;
+      const v=e.target.textContent.trim();
+      store.todos[id].title=v||store.todos[id].title;
+      save();
+      const fullTitle = store.todos[id]?.title || '';
+      e.target.textContent = fullTitle;
+      e.target.setAttribute('title', fullTitle);
+      setTitleEditingState(e.target, false);
+      applyTitleOverflowState(e.target, fullTitle);
+    }
+  }, true);
 }
 
 /*** ====== PROJECTS VIEW ====== ***/
