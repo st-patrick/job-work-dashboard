@@ -366,6 +366,13 @@
     overflow:auto;
     max-height:8.5em;
   }
+  .todoRow.blocked{
+    background:color-mix(in oklab,var(--card) 88%, var(--muted));
+    opacity:0.85;
+  }
+  .todoRow.blocked:hover{
+    opacity:1;
+  }
   .title-ellipsis{
     display:none;
     margin-left:4px;
@@ -374,6 +381,11 @@
   }
   .title-cell.has-long-title .title-ellipsis{display:inline-flex;}
   .title-cell.editing .title-ellipsis{display:none;}
+  .badge-blocked{
+    background:color-mix(in oklab,var(--warn) 15%, transparent);
+    color:var(--warn);
+    margin-left:8px;
+  }
   
   .meta-text{
     font-size:13px;
@@ -616,6 +628,10 @@
   .card[kb] {
     padding: 12px;
     gap: 8px;
+  }
+  .card[kb].blocked{
+    background:color-mix(in oklab,var(--panel) 88%, var(--muted));
+    opacity:0.9;
   }
   
   .card[kb] .cardhead {
@@ -1293,7 +1309,9 @@ const viewData = {
   people: [],       // Filtered/sorted people
   statuses: [],     // Available statuses (derived from STATUS_DEFINITIONS)
   projectsMap: {},  // Map of projectId -> project
-  peopleMap: {}     // Map of personId -> person
+  peopleMap: {},    // Map of personId -> person
+  todoWaitingOn: new Set(),    // Todo IDs where we wait on others
+  todoWaitingOnMe: new Set()   // Todo IDs where others wait on us
 };
 
 let store=load();
@@ -1506,6 +1524,12 @@ function applyTitleOverflowState(target, fullTitle=''){
   const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
   cell.classList.toggle('has-long-title', isLong);
 }
+function isTodoBlocked(todoId){
+  const waitingOnSet = viewData.todoWaitingOn;
+  const waitingOnMeSet = viewData.todoWaitingOnMe;
+  if(!waitingOnSet || !waitingOnMeSet) return false;
+  return waitingOnSet.has(todoId) && !waitingOnMeSet.has(todoId);
+}
 
 /*** ====== NAV + IO ====== ***/
 const tabs=el('#tabs');
@@ -1637,6 +1661,16 @@ function computeViewData() {
   let todos = Object.values(store.todos);
   let projects = Object.values(store.projects);
   let people = Object.values(store.people);
+
+  // Compute waiting relationships (always based on full store state)
+  const waitingOnOthers = new Set();
+  const waitingOnMe = new Set();
+  Object.values(store.people).forEach(person => {
+    (person.waitingForMe || []).forEach(id => waitingOnOthers.add(id));
+    (person.waitingForThem || []).forEach(id => waitingOnMe.add(id));
+  });
+  viewData.todoWaitingOn = waitingOnOthers;
+  viewData.todoWaitingOnMe = waitingOnMe;
   
   // Apply archived filter globally (unless explicitly showing archived)
   if (!globalShowArchived.checked) {
@@ -1823,22 +1857,26 @@ function renderMainTodos() {
     const project = store.projects[t.projectId];
     const archivedStyle = t.archived ? 'style="opacity:0.5"' : '';
     const archivedBadge = t.archived ? '<span class="badge" style="background:var(--muted);color:#fff;margin-left:8px">🗄 Archived</span>' : '';
+    const blocked = isTodoBlocked(t.id);
+    const rowClasses = ['todoRow'];
+    if (blocked) rowClasses.push('blocked');
     const fullTitle = t.title || '';
     const safeFullTitle = escapeHtml(fullTitle);
-  const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
-  const titleCellClasses = ['title-cell'];
-  if (isLong) titleCellClasses.push('has-long-title');
+    const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
+    const titleCellClasses = ['title-cell'];
+    if (isLong) titleCellClasses.push('has-long-title');
+    const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
     
-    return `<div class="todoRow" data-id="${t.id}" ${archivedStyle}>
+    return `<div class="${rowClasses.join(' ')}" data-id="${t.id}" ${archivedStyle}>
       <div class="hiu" data-id="${t.id}">
         <span class="d h ${t.eisen?.impact ? 'on' : ''}" data-act="toggle" data-k="impact" title="High impact"></span>
         <span class="d i ${t.eisen?.important ? 'on' : ''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${t.eisen?.urgent ? 'on' : ''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
-  <div class="${titleCellClasses.join(' ')}">
-  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
-  <span class="title-ellipsis" aria-hidden="true">...</span>
-        ${archivedBadge}
+      <div class="${titleCellClasses.join(' ')}">
+        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+        <span class="title-ellipsis" aria-hidden="true">...</span>
+        ${blockedBadge}${blockedBadge && archivedBadge ? ' ' : ''}${archivedBadge}
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
@@ -1915,21 +1953,26 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
     const project = store.projects[t.projectId];
     const people = (t.people || []).map(pid => store.people[pid]).filter(Boolean);
     const tags = (t.tags || []).map(tag => `<span class="pill" style="background:var(--acc);color:#fff;border-color:transparent">${tag}</span>`).join(' ');
+  const blocked = isTodoBlocked(t.id);
+  const rowClasses = ['todoRow'];
+  if (blocked) rowClasses.push('blocked');
   const fullTitle = t.title || '';
   const safeFullTitle = escapeHtml(fullTitle);
   const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
   const titleCellClasses = ['title-cell'];
   if (isLong) titleCellClasses.push('has-long-title');
+  const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
     
-    return `<div class="todoRow" data-id="${t.id}">
+    return `<div class="${rowClasses.join(' ')}" data-id="${t.id}">
       <div class="hiu" data-id="${t.id}">
         <span class="d h ${t.eisen?.impact?'on':''}" data-act="toggle" data-k="impact" title="High impact"></span>
         <span class="d i ${t.eisen?.important?'on':''}" data-act="toggle" data-k="important" title="Important"></span>
         <span class="d u ${t.eisen?.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
       <div class="${titleCellClasses.join(' ')}">
-  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
-  <span class="title-ellipsis" aria-hidden="true">...</span>
+        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+        <span class="title-ellipsis" aria-hidden="true">...</span>
+        ${blockedBadge}
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
@@ -2446,7 +2489,18 @@ function renderKanban(){
   
   updateBoardControls();
 }
-function kanbanCard(t){ const p=store.projects[t.projectId]; return `<div class="card" kb data-id="${t.id}" data-act="openModal" style="cursor:pointer" title="Click to edit todo"><div class="cardhead"><div class="cardtitle tiny">${t.title}</div></div><div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span><span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div></div>`; }
+function kanbanCard(t){
+  const p=store.projects[t.projectId];
+  const blocked = isTodoBlocked(t.id);
+  const cardClasses = ['card'];
+  if (blocked) cardClasses.push('blocked');
+  const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
+  const safeTitle = escapeHtml(t.title || '');
+  return `<div class="${cardClasses.join(' ')}" kb data-id="${t.id}" data-act="openModal" style="cursor:pointer" title="Click to edit todo">
+    <div class="cardhead"><div class="cardtitle tiny">${safeTitle}</div></div>
+    <div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span>${blockedBadge ? blockedBadge : ''}<span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div>
+  </div>`;
+}
 function moveInKanban(todoId, toColId, targetTodoId = null){ 
   const isDefaultBoard = store.current.activeKanbanId === 'default';
   
