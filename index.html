@@ -386,6 +386,22 @@
     color:var(--warn);
     margin-left:8px;
   }
+  .badge-duration{
+    background:color-mix(in oklab,var(--acc) 10%, transparent);
+    color:var(--acc);
+    margin-left:8px;
+  }
+  .duration-input{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .duration-input input{
+    flex:0 0 140px;
+  }
+  .duration-input select{
+    min-width:120px;
+  }
   
   .meta-text{
     font-size:13px;
@@ -987,6 +1003,8 @@
           <option value="due-desc">Due ↓</option>
           <option value="priority-desc">Priority (HIU) ↓</option>
           <option value="priority-asc">Priority (HIU) ↑</option>
+          <option value="duration-asc">Duration ↑</option>
+          <option value="duration-desc">Duration ↓</option>
           <option value="status-asc">Status A→Z</option>
           <option value="project-asc">Project A→Z</option>
           <option value="project-desc">Project Z→A</option>
@@ -1077,6 +1095,21 @@
         <option value="waiting">Waiting</option><option value="review">Review</option>
         <option value="done">Done</option></select></div>
     </div>
+    <div class="row">
+      <div>
+        <label>Estimated duration</label>
+        <div class="duration-input">
+          <input type="number" id="tDurationValue" min="0" step="0.25" placeholder="0">
+          <select id="tDurationUnit">
+            <option value="minutes">minutes</option>
+            <option value="hours">hours</option>
+            <option value="days">days</option>
+          </select>
+        </div>
+        <div class="tiny muted" style="margin-top:4px">Used for scheduling and sorting; leave blank to skip.</div>
+      </div>
+      <div></div>
+    </div>
     <div>
       <label>Eisenhower (H/I/U)</label>
       <div class="hiu" id="eisenForm">
@@ -1153,6 +1186,7 @@
         <select id="aSort">
           <option value="due-asc">Due ↑</option><option value="due-desc">Due ↓</option>
           <option value="priority-desc">Priority ↓</option><option value="priority-asc">Priority ↑</option>
+          <option value="duration-asc">Duration ↑</option><option value="duration-desc">Duration ↓</option>
           <option value="created-desc">Created ↓</option><option value="title-asc">Title A→Z</option>
         </select>
       </div>
@@ -1506,6 +1540,7 @@ const universalHaystack=t=>{
   return [t.title,t.notes,(t.tags||[]).join(' '),t.status,score(t),t.id,t.due,projName(t),people].join(' ').toLowerCase();
 };
 const TITLE_MAX_LEN = 80;
+const DURATION_FACTORS = { minutes: 1, hours: 60, days: 1440 };
 const escapeHtml = str=>String(str??'').replace(/[&<>"']/g,c=>({
   '&':'&amp;',
   '<':'&lt;',
@@ -1524,6 +1559,43 @@ function applyTitleOverflowState(target, fullTitle=''){
   const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
   cell.classList.toggle('has-long-title', isLong);
 }
+function normalizeDurationInput(valueStr, unit='minutes'){
+  if(valueStr==='' || valueStr===null || valueStr===undefined) return null;
+  const numeric = Number.parseFloat(valueStr);
+  if(!Number.isFinite(numeric) || numeric < 0) return null;
+  const factor = DURATION_FACTORS[unit] || 1;
+  const minutes = Math.round(numeric * factor);
+  return minutes > 0 ? minutes : null;
+}
+function bestDurationUnit(minutes){
+  if(!minutes || minutes <= 0) return { value: '', unit: 'minutes' };
+  if(minutes % DURATION_FACTORS.days === 0) return { value: minutes / DURATION_FACTORS.days, unit: 'days' };
+  if(minutes % DURATION_FACTORS.hours === 0) return { value: minutes / DURATION_FACTORS.hours, unit: 'hours' };
+  return { value: minutes, unit: 'minutes' };
+}
+function formatDuration(minutes){
+  const total = Number(minutes) || 0;
+  if(total <= 0) return '';
+  const parts = [];
+  let remaining = total;
+  const days = Math.floor(remaining / DURATION_FACTORS.days);
+  if(days){
+    parts.push(`${days}d`);
+    remaining -= days * DURATION_FACTORS.days;
+  }
+  const hours = Math.floor(remaining / DURATION_FACTORS.hours);
+  if(hours){
+    parts.push(`${hours}h`);
+    remaining -= hours * DURATION_FACTORS.hours;
+  }
+  const mins = remaining % DURATION_FACTORS.hours;
+  if(mins){
+    parts.push(`${mins}m`);
+  }
+  if(!parts.length) parts.push('0m');
+  return parts.join(' ');
+}
+const getDurationMinutes = todo => Number(todo?.estimatedDurationMinutes) || 0;
 function isTodoBlocked(todoId){
   const waitingOnSet = viewData.todoWaitingOn;
   const waitingOnMeSet = viewData.todoWaitingOnMe;
@@ -1821,6 +1893,31 @@ fSort.addEventListener('input',()=>{
   saveViewState();
 });
 
+const compareDurationAsc = (a,b)=>{
+  const aDur = getDurationMinutes(a);
+  const bDur = getDurationMinutes(b);
+  const aHas = aDur > 0;
+  const bHas = bDur > 0;
+  if(aHas && bHas){
+    if(aDur !== bDur) return aDur - bDur;
+    return (a.title||'').localeCompare(b.title||'');
+  }
+  if(aHas !== bHas) return aHas ? -1 : 1;
+  return (a.title||'').localeCompare(b.title||'');
+};
+const compareDurationDesc = (a,b)=>{
+  const aDur = getDurationMinutes(a);
+  const bDur = getDurationMinutes(b);
+  const aHas = aDur > 0;
+  const bHas = bDur > 0;
+  if(aHas && bHas){
+    if(aDur !== bDur) return bDur - aDur;
+    return (a.title||'').localeCompare(b.title||'');
+  }
+  if(aHas !== bHas) return aHas ? -1 : 1;
+  return (a.title||'').localeCompare(b.title||'');
+};
+
 const SORTS={
   'due-asc':(a,b)=> (a.due||'9999-12-31')<(b.due||'9999-12-31')?-1:1,
   'due-desc':(a,b)=> (a.due||'0000-01-01')>(b.due||'0000-01-01')?-1:1,
@@ -1831,6 +1928,8 @@ const SORTS={
   'project-desc':(a,b)=> projName(b).localeCompare(projName(a)),
   'title-asc':(a,b)=> (a.title||'').localeCompare(b.title||''),
   'created-desc':(a,b)=> (b.created||0)-(a.created||0),
+  'duration-asc': compareDurationAsc,
+  'duration-desc': compareDurationDesc,
 };
 
 function renderMainTodos() {
@@ -1854,18 +1953,21 @@ function renderMainTodos() {
   todoList.innerHTML = header + items.map(t => {
     const isLate = t.due && new Date(t.due) < new Date().setHours(0, 0, 0, 0);
     const dueClass = isLate ? 'style="color:var(--bad)"' : '';
-    const project = store.projects[t.projectId];
-    const archivedStyle = t.archived ? 'style="opacity:0.5"' : '';
-    const archivedBadge = t.archived ? '<span class="badge" style="background:var(--muted);color:#fff;margin-left:8px">🗄 Archived</span>' : '';
+  const project = store.projects[t.projectId];
+  const archivedStyle = t.archived ? 'style="opacity:0.5"' : '';
+  const archivedBadge = t.archived ? '<span class="badge" style="background:var(--muted);color:#fff;margin-left:8px">🗄 Archived</span>' : '';
     const blocked = isTodoBlocked(t.id);
     const rowClasses = ['todoRow'];
     if (blocked) rowClasses.push('blocked');
     const fullTitle = t.title || '';
     const safeFullTitle = escapeHtml(fullTitle);
-    const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
-    const titleCellClasses = ['title-cell'];
-    if (isLong) titleCellClasses.push('has-long-title');
-    const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
+  const isLong = fullTitle.trim().length > TITLE_MAX_LEN;
+  const titleCellClasses = ['title-cell'];
+  if (isLong) titleCellClasses.push('has-long-title');
+  const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
+  const durationMinutes = getDurationMinutes(t);
+  const durationBadge = durationMinutes > 0 ? `<span class="badge badge-duration" title="Estimated duration: ${formatDuration(durationMinutes)}">⏱ ${formatDuration(durationMinutes)}</span>` : '';
+  const badges = [durationBadge, blockedBadge, archivedBadge].filter(Boolean);
     
     return `<div class="${rowClasses.join(' ')}" data-id="${t.id}" ${archivedStyle}>
       <div class="hiu" data-id="${t.id}">
@@ -1874,9 +1976,9 @@ function renderMainTodos() {
         <span class="d u ${t.eisen?.urgent ? 'on' : ''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
       <div class="${titleCellClasses.join(' ')}">
-        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
-        <span class="title-ellipsis" aria-hidden="true">...</span>
-        ${blockedBadge}${blockedBadge && archivedBadge ? ' ' : ''}${archivedBadge}
+  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+  <span class="title-ellipsis" aria-hidden="true">...</span>
+  ${badges.join(' ')}
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
@@ -1962,6 +2064,9 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
   const titleCellClasses = ['title-cell'];
   if (isLong) titleCellClasses.push('has-long-title');
   const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
+  const durationMinutes = getDurationMinutes(t);
+  const durationBadge = durationMinutes > 0 ? `<span class="badge badge-duration" title="Estimated duration: ${formatDuration(durationMinutes)}">⏱ ${formatDuration(durationMinutes)}</span>` : '';
+  const badges = [durationBadge, blockedBadge].filter(Boolean);
     
     return `<div class="${rowClasses.join(' ')}" data-id="${t.id}">
       <div class="hiu" data-id="${t.id}">
@@ -1970,9 +2075,9 @@ const renderTodos = (items = [], container, {showProject=false, showPeople=false
         <span class="d u ${t.eisen?.urgent?'on':''}" data-act="toggle" data-k="urgent" title="Urgent"></span>
       </div>
       <div class="${titleCellClasses.join(' ')}">
-        <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
-        <span class="title-ellipsis" aria-hidden="true">...</span>
-        ${blockedBadge}
+  <span class="title" contenteditable="true" spellcheck="false" data-act="editTitle" data-id="${t.id}" title="${safeFullTitle}">${safeFullTitle}</span>
+  <span class="title-ellipsis" aria-hidden="true">...</span>
+  ${badges.join(' ')}
       </div>
       <div class="meta-text">${t.status}</div>
       <div class="meta-text">${project?.name || '—'}</div>
@@ -2496,9 +2601,11 @@ function kanbanCard(t){
   if (blocked) cardClasses.push('blocked');
   const blockedBadge = blocked ? '<span class="badge badge-blocked">Blocked</span>' : '';
   const safeTitle = escapeHtml(t.title || '');
+  const durationMinutes = getDurationMinutes(t);
+  const durationBadge = durationMinutes > 0 ? `<span class="badge badge-duration" title="Estimated duration: ${formatDuration(durationMinutes)}">⏱ ${formatDuration(durationMinutes)}</span>` : '';
   return `<div class="${cardClasses.join(' ')}" kb data-id="${t.id}" data-act="openModal" style="cursor:pointer" title="Click to edit todo">
     <div class="cardhead"><div class="cardtitle tiny">${safeTitle}</div></div>
-    <div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span>${blockedBadge ? blockedBadge : ''}<span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div>
+    <div class="toolbar"><span class="pill"><span class="dot" style="color:${p?.color||'var(--muted)'}"></span>${p?.name||'—'}</span>${durationBadge ? ' '+durationBadge : ''}${blockedBadge ? ' '+blockedBadge : ''}<span class="badge">${fmtDue(t.due)}</span><span class="badge">${t.status}</span></div>
   </div>`;
 }
 function moveInKanban(todoId, toColId, targetTodoId = null){ 
@@ -2583,7 +2690,7 @@ el('#bCols')?.addEventListener('click',(e)=>{ const kb=store.kanbans[store.curre
 
 /*** ====== TODO MODAL ====== ***/
 const dlgTodo=el('#dlgTodo');
-const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'), tDue=el('#tDue'), tStatus=el('#tStatus'), selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'), eisenForm=el('#eisenForm');
+const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'), tDue=el('#tDue'), tStatus=el('#tStatus'), tDurationValue=el('#tDurationValue'), tDurationUnit=el('#tDurationUnit'), selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'), eisenForm=el('#eisenForm');
 el('#fabAdd').onclick=()=>openTodoModal();
 
 // Close dialogs when clicking on backdrop
@@ -2606,12 +2713,23 @@ function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
     const waitingOnMeIds=Object.values(store.people).filter(p=>p.waitingForThem?.includes(id)).map(p=>p.id); 
     setMultiSel(selWaitingOn,new Set(waitingOnIds)); setMultiSel(selWaitingOnMe,new Set(waitingOnMeIds)); 
     setEisenUI(t.eisen||{impact:0,important:0,urgent:0}); 
+    const durationMinutes = getDurationMinutes(t);
+    if(durationMinutes > 0){
+      const best = bestDurationUnit(durationMinutes);
+      tDurationValue.value = best.value;
+      tDurationUnit.value = best.unit;
+    } else {
+      tDurationValue.value = '';
+      tDurationUnit.value = 'minutes';
+    }
     el('#todoFormTitle').textContent='Edit Todo'; 
   el('#btnDeleteTodo').style.display='block';
   el('#btnArchiveTodo').style.display = t.archived ? 'none' : 'inline-block';
   el('#btnUnarchiveTodo').style.display = t.archived ? 'inline-block' : 'none';
   }else{ 
     tId.value=''; el('#todoForm').reset(); tProject.value=presetProjectId||''; 
+    tDurationValue.value='';
+    tDurationUnit.value='minutes';
     setMultiSel(selWaitingOn,new Set(presetPersonId?[presetPersonId]:[])); setMultiSel(selWaitingOnMe,new Set()); 
     setEisenUI({impact:0,important:0,urgent:0}); 
     el('#todoFormTitle').textContent='New Todo'; 
@@ -2625,7 +2743,53 @@ function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+
 function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
-const saveTodoHandler = e=>{ e.preventDefault(); const isEdit=!!tId.value; const id=isEdit?tId.value:nextId(); const projectId=tProject.value||''; const waitingOn=new Set(getMultiSel(selWaitingOn)); const waitingOnMe=new Set(getMultiSel(selWaitingOnMe)); const ev=[...els('.d',eisenForm)].reduce((a,b)=>{a[b.dataset.k]=b.classList.contains('on')?1:0;return a;},{impact:0,important:0,urgent:0}); const archived = isEdit ? store.todos[id].archived || false : false; const todo={id,title:tTitle.value.trim(),notes:tNotes.value.trim(),projectId, people:[...new Set([...waitingOn,...waitingOnMe])], tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), eisen:ev, due:tDue.value||'',status:tStatus.value,created:isEdit?store.todos[id].created:Date.now(), archived }; store.todos[id]=todo; Object.values(store.projects).forEach(p=>{const has=p.todoIds?.includes(id); if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);} if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);} }); Object.values(store.people).forEach(p=>{ p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id); p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id); if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id); if(waitingOnMe.has(p.id)) (p.waitingForThem||=[]).push(id); }); if(pendingPlacement && !isEdit){ moveInKanban(id, pendingPlacement.colId); pendingPlacement=null; } save(); dlgTodo.close(); render(true); };
+const saveTodoHandler = e=>{
+  e.preventDefault();
+  const isEdit=!!tId.value;
+  const id=isEdit?tId.value:nextId();
+  const projectId=tProject.value||'';
+  const waitingOn=new Set(getMultiSel(selWaitingOn));
+  const waitingOnMe=new Set(getMultiSel(selWaitingOnMe));
+  const ev=[...els('.d',eisenForm)].reduce((a,b)=>{
+    a[b.dataset.k]=b.classList.contains('on')?1:0;
+    return a;
+  },{impact:0,important:0,urgent:0});
+  const archived = isEdit ? store.todos[id].archived || false : false;
+  const estimatedDurationMinutes = normalizeDurationInput(tDurationValue.value, tDurationUnit.value);
+  const todo={
+    id,
+    title:tTitle.value.trim(),
+    notes:tNotes.value.trim(),
+    projectId,
+    people:[...new Set([...waitingOn,...waitingOnMe])],
+    tags:(el('#tTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+    eisen:ev,
+    due:tDue.value||'',
+    status:tStatus.value,
+    created:isEdit?store.todos[id].created:Date.now(),
+    archived,
+    estimatedDurationMinutes
+  };
+  store.todos[id]=todo;
+  Object.values(store.projects).forEach(p=>{
+    const has=p.todoIds?.includes(id);
+    if(p.id===projectId && !has){(p.todoIds||(p.todoIds=[])).push(id);}
+    if(p.id!==projectId && has){p.todoIds.splice(p.todoIds.indexOf(id),1);}
+  });
+  Object.values(store.people).forEach(p=>{
+    p.waitingForMe=(p.waitingForMe||[]).filter(tid=>tid!==id);
+    p.waitingForThem=(p.waitingForThem||[]).filter(tid=>tid!==id);
+    if(waitingOn.has(p.id)) (p.waitingForMe||=[]).push(id);
+    if(waitingOnMe.has(p.id)) (p.waitingForThem||[]).push(id);
+  });
+  if(pendingPlacement && !isEdit){
+    moveInKanban(id, pendingPlacement.colId);
+    pendingPlacement=null;
+  }
+  save();
+  dlgTodo.close();
+  render(true);
+};
 el('#btnSaveTodo').onclick=saveTodoHandler;
 
 // Archive/Unarchive handlers
@@ -2690,9 +2854,9 @@ function openAttachModal(ctx){ attachCtx=ctx; const title=ctx.type==='person' ? 
 function renderAttachList(){ let items=Object.values(store.todos); const q=aSearch.value.trim().toLowerCase(); if(q){ items=items.filter(t=>universalHaystack(t).includes(q)); } const proj=aProject.value; if(proj) items=items.filter(t=>t.projectId===proj); const person=aPerson.value; if(person) items=items.filter(t=>(t.people||[]).includes(person)); const st=aStatus.value; if(st) items=items.filter(t=>t.status===st); if(attachCtx?.type==='person'){ const p=store.people[attachCtx.personId]; const arr=(p?.[attachCtx.side]||[]); items=items.filter(t=>!arr.includes(t.id)); } else if(attachCtx?.type==='kanban'){ const kb=store.kanbans[attachCtx.boardId]; const set=new Set(kb?.columns.flatMap(c=>c.todoIds)||[]); items=items.filter(t=>!set.has(t.id)); }
   const sorter=SORTS[aSort.value]||SORTS['due-asc']; items.sort(sorter);
   el('#aCount').textContent=`${items.length} candidates`;
-  attachList.innerHTML=items.map(t=>{ const p=store.projects[t.projectId]; return `<div class="todoRow" data-id="${t.id}">
+  attachList.innerHTML=items.map(t=>{ const p=store.projects[t.projectId]; const durationMinutes=getDurationMinutes(t); const durationBadge=durationMinutes>0 ? `<span class="badge badge-duration" title="Estimated duration: ${formatDuration(durationMinutes)}">⏱ ${formatDuration(durationMinutes)}</span>` : ''; const safeTitle=escapeHtml(t.title||''); return `<div class="todoRow" data-id="${t.id}">
       <input type="checkbox" data-id="${t.id}" />
-      <div class="title">${t.title}</div>
+      <div class="title">${safeTitle}${durationBadge ? ' '+durationBadge : ''}</div>
       <div class="hiu">
         <span class="d h ${t.eisen?.impact?'on':''}"></span>
         <span class="d i ${t.eisen?.important?'on':''}"></span>
