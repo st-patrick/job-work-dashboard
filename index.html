@@ -23,6 +23,7 @@
       <button class="tab" data-tab="people">People</button>
       <button class="tab" data-tab="kanban">Kanban</button>
       <button class="tab" data-tab="canvas">Canvas</button>
+      <button class="tab" data-tab="ai"><i class="fas fa-robot"></i> AI</button>
     </div>
     <div class="rightbar">
       <input type="file" id="fileImport" accept="application/json" class="hidden">
@@ -34,23 +35,19 @@
 <div class="wrap" style="padding-top:8px;padding-bottom:0">
   <div class="universal-filters">
     <div class="filter-group">
-      <label>Search</label>
-      <input type="text" id="globalSearch" placeholder="Search anything…">
+      <input type="text" id="globalSearch" placeholder="Search…">
     </div>
     <div class="filter-group">
-      <label>Project</label>
       <select id="globalProject">
         <option value="">All projects</option>
       </select>
     </div>
     <div class="filter-group">
-      <label>Person</label>
       <select id="globalPerson">
         <option value="">All people</option>
       </select>
     </div>
     <div class="filter-group">
-      <label>Status</label>
       <select id="globalStatus">
         <option value="">Any status</option>
         <option value="todo">Todo</option>
@@ -60,25 +57,19 @@
         <option value="done">Done</option>
       </select>
     </div>
-    <div class="filter-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="globalDueToday">
-        <span>Due Today</span>
-      </label>
-    </div>
-    <div class="filter-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="globalOverdue">
-        <span>Overdue</span>
-      </label>
-    </div>
-    <div class="filter-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="globalShowArchived">
-        <span>Show Archived</span>
-      </label>
-    </div>
-    <button class="pill" id="btnClearFilters" title="Clear all filters"><i class="fas fa-times"></i> Clear</button>
+    <label class="checkbox-label">
+      <input type="checkbox" id="globalDueToday">
+      <span>Due Today</span>
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" id="globalOverdue">
+      <span>Overdue</span>
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" id="globalShowArchived">
+      <span>Archived</span>
+    </label>
+    <button class="pill" id="btnClearFilters" title="Clear all filters"><i class="fas fa-times"></i></button>
   </div>
 </div>
 
@@ -174,12 +165,6 @@
           <select id="kbSelect"></select>
         </div>
       </div>
-      <div class="kanban-toolbar-group">
-        <div class="kanban-control">
-          <label class="tiny muted">Project</label>
-          <select id="kbProject"><option value="">All</option></select>
-        </div>
-      </div>
     </div>
     <div class="grid-boards" id="kanbanGrid"></div>
     <!-- Hidden buttons for context menu -->
@@ -210,6 +195,49 @@
         <button id="btnArrangeEntities"></button>
         <button id="btnFitToContent"></button>
         <button id="btnCanvasReset"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI CHAT -->
+  <section id="view-ai" class="panel hidden">
+    <div class="ai-container">
+      <div class="ai-header">
+        <div class="ai-title">
+          <i class="fas fa-robot"></i>
+          <span>Project Manager AI</span>
+        </div>
+        <div class="ai-meta">
+          <span class="ai-data-size" id="aiDataSize" title="Size of data sent to AI">
+            <i class="fas fa-database"></i>
+            <span id="aiDataSizeText">--</span>
+          </span>
+          <button class="iconbtn" id="btnAiClearChat" title="Clear chat">
+            <i class="fas fa-trash"></i>
+          </button>
+          <button class="iconbtn" id="btnAiSettings" title="API Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+      </div>
+      <div class="ai-messages" id="aiMessages">
+        <div class="ai-welcome">
+          <div class="ai-welcome-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+          <h3>AI Project Assistant</h3>
+          <p>Ask me about your todos, projects, or people. I can help you prioritize, summarize, or analyze your work.</p>
+          <div class="ai-suggestions">
+            <button class="ai-suggestion" data-prompt="What are my most urgent tasks?">Most urgent tasks</button>
+            <button class="ai-suggestion" data-prompt="Summarize my projects and their status">Project summary</button>
+            <button class="ai-suggestion" data-prompt="Who has the most work on their plate?">Workload analysis</button>
+            <button class="ai-suggestion" data-prompt="What tasks are overdue or due soon?">Overdue tasks</button>
+          </div>
+        </div>
+      </div>
+      <div class="ai-input-area">
+        <textarea id="aiPrompt" placeholder="Ask about your projects, todos, or team..." rows="1"></textarea>
+        <button id="btnAiSend" class="ai-send-btn" title="Send">
+          <i class="fas fa-paper-plane"></i>
+        </button>
       </div>
     </div>
   </section>
@@ -403,6 +431,34 @@
       <button id="btnConfirmDeleteProject" value="default" class="pill" style="background:var(--bad);color:#fff;border-color:transparent">Delete Project</button>
     </div>
     <input type="hidden" id="deleteProjectId">
+  </form>
+</dialog>
+
+<!-- MODAL: AI SETTINGS -->
+<dialog id="dlgAiSettings">
+  <form method="dialog" class="modal">
+    <h3><i class="fas fa-robot"></i> AI Settings</h3>
+    <div class="row">
+      <div style="flex:1">
+        <label>OpenAI API Key</label>
+        <input type="password" id="aiApiKey" placeholder="sk-..." style="font-family:monospace">
+        <small class="muted">Your API key is stored locally and never sent anywhere except OpenAI.</small>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1">
+        <label>Model</label>
+        <select id="aiModel">
+          <option value="gpt-4o-mini">GPT-4o Mini (fast, cheap)</option>
+          <option value="gpt-4o">GPT-4o (powerful)</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+        </select>
+      </div>
+    </div>
+    <div class="toolbar" style="justify-content:flex-end;gap:8px">
+      <button value="cancel" class="pill">Cancel</button>
+      <button value="default" class="pill action">Save</button>
+    </div>
   </form>
 </dialog>
 

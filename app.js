@@ -328,7 +328,7 @@ function isTodoBlocked(todoId){
 
 /*** ====== NAV + IO ====== ***/
 const tabs=el('#tabs');
-const views=['todos','projects','people','kanban','canvas'];
+const views=['todos','projects','people','kanban','canvas','ai'];
 function setTab(tab){views.forEach(id=>el('#view-'+id).classList.toggle('hidden',tab!==id)); store.current.tab=tab; save(); render(true);}
 
 tabs.addEventListener('click',e=>{const b=e.target.closest('.tab'); if(!b) return; els('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); setTab(b.dataset.tab);});
@@ -747,7 +747,6 @@ function renderTodoRow(t) {
       <span class="title-ellipsis" aria-hidden="true">...</span>
       ${badges.join(' ')}
     </div>
-    <div class="meta-text">${t.status}</div>
     <div class="meta-text">${project?.name || '—'}</div>
     <div class="meta-text" ${dueClass}>${t.due ? fmtDue(t.due) : '—'}</div>
   </div>`;
@@ -810,7 +809,6 @@ function renderMainTodos() {
   const header = `<div class="todoHeader">
     <div>Priority</div>
     <div>Title</div>
-    <div>Status</div>
     <div>Project</div>
     <div>Due</div>
   </div>`;
@@ -1372,27 +1370,55 @@ canvasContextMenu.addEventListener('click', e => {
 /*** ====== PEOPLE VIEW ====== ***/
 
 // Populate projects checkboxes when opening person modal
-function openPersonModal() {
+let editingPersonId = null;
+
+function openPersonModal(personId = null) {
+  editingPersonId = personId;
+  const person = personId ? store.people[personId] : null;
   const sProjects = el('#sProjects');
+  const personProjects = person?.projects || [];
+  
   sProjects.innerHTML = Object.values(store.projects).map(p => 
-    `<label><input type="checkbox" value="${p.id}"><span class="group-color" style="background:${p.color}"></span>${p.name}</label>`
+    `<label><input type="checkbox" value="${p.id}"${personProjects.includes(p.id) ? ' checked' : ''}><span class="group-color" style="background:${p.color}"></span>${p.name}</label>`
   ).join('');
+  
+  if (person) {
+    el('#sName').value = person.name || '';
+    el('#sInit').value = person.initials || '';
+    el('#personForm').querySelector('h3').textContent = 'Edit Person';
+  } else {
+    el('#sName').value = '';
+    el('#sInit').value = '';
+    el('#personForm').querySelector('h3').textContent = 'New Person';
+  }
+  
   el('#dlgPerson').showModal();
 }
 
-el('#btnAddPerson').onclick = openPersonModal;
+el('#btnAddPerson').onclick = () => openPersonModal();
 
 const savePersonHandler = e => {
   e.preventDefault();
   const name = el('#sName').value.trim();
   if (!name) return;
   const initials = (el('#sInit').value.trim() || name.split(/\s+/).map(s => s[0]).join('').slice(0, 3)).toUpperCase();
-  const id = initials.toLowerCase() + nextId();
   const selectedProjects = Array.from(el('#sProjects').querySelectorAll('input:checked')).map(cb => cb.value);
-  store.people[id] = { id, name, initials, waitingForMe: [], waitingForThem: [], projects: selectedProjects };
+  
+  if (editingPersonId && store.people[editingPersonId]) {
+    // Update existing person
+    store.people[editingPersonId].name = name;
+    store.people[editingPersonId].initials = initials;
+    store.people[editingPersonId].projects = selectedProjects;
+  } else {
+    // Create new person
+    const id = initials.toLowerCase() + nextId();
+    store.people[id] = { id, name, initials, waitingForMe: [], waitingForThem: [], projects: selectedProjects };
+  }
+  
   save();
   el('#dlgPerson').close();
   el('#personForm').reset();
+  editingPersonId = null;
   renderPeople();
   renderTodos();
 };
@@ -1652,16 +1678,22 @@ function renderPeople(){
     const act = target?.dataset.act;
     if(act==='addWithPerson'){ openTodoModal(null,null,target.dataset.pid); return; }
     if(act==='openAttach'){ openAttachModal({type:'person', personId:target.dataset.pid, side:target.dataset.side}); return; }
-    if(act==='open') openTodoModal(target.dataset.id);
-    if(e.target.classList.contains('xbtn')){ const wrap=e.target.closest('.ptask'); const pid=wrap.dataset.pid, side=wrap.dataset.side, tid=wrap.dataset.tid; const p=store.people[pid]; p[side]=p[side].filter(id=>id!==tid); recomputeTodoPeople(tid); save(); renderPeople(); renderTodos(); renderKanban(); }
+    if(act==='open') { openTodoModal(target.dataset.id); return; }
+    if(e.target.classList.contains('xbtn')){ const wrap=e.target.closest('.ptask'); const pid=wrap.dataset.pid, side=wrap.dataset.side, tid=wrap.dataset.tid; const p=store.people[pid]; p[side]=p[side].filter(id=>id!==tid); recomputeTodoPeople(tid); save(); renderPeople(); renderTodos(); renderKanban(); return; }
+    
+    // Click on person row (not on task chips or buttons) opens edit modal
+    const personRow = e.target.closest('.person-row:not(.person-header)');
+    if (personRow && !e.target.closest('.ptask, .xbtn, button')) {
+      const personId = personRow.dataset.person;
+      if (personId) openPersonModal(personId);
+    }
   };
 }
 
 /*** ====== KANBAN ====== ***/
-const kbSelect=el('#kbSelect'), kbProject=el('#kbProject'), kanbanGrid=el('#kanbanGrid');
+const kbSelect=el('#kbSelect'), kanbanGrid=el('#kanbanGrid');
 el('#btnAddBoard').onclick=()=>{ const name=prompt('Board name?'); if(!name) return; const id='kb'+nextId(); store.kanbans[id]={id,name,columns:[{id:'col-'+nextId(),name:'Backlog',todoIds:[]}]}; store.current.activeKanbanId=id; save(); renderKanban(); };
 kbSelect.onchange=()=>{store.current.activeKanbanId=kbSelect.value; save(); updateBoardControls(); renderKanban();};
-kbProject.onchange=()=>renderKanban();
 
 el('#btnEditBoard').onclick=()=>openBoardEditor();
 
@@ -1678,9 +1710,7 @@ function renderKanban(){
   
   kbSelect.innerHTML=allBoards.map(k=>`<option value="${k.id}" ${store.current.activeKanbanId===k.id?'selected':''}>${k.name}</option>`).join('');
   if(!store.current.activeKanbanId){store.current.activeKanbanId='default'; save();}
-  kbProject.innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
 
-  const filterProj=kbProject.value;
   const isDefaultBoard = store.current.activeKanbanId === 'default';
   
   if (isDefaultBoard) {
@@ -1692,8 +1722,8 @@ function renderKanban(){
     }));
     
     kanbanGrid.innerHTML = statusColumns.map(col => {
-      // Use viewData filtered todos, then apply board-specific project filter
-      let todos = viewData.todos.filter(t => t.status === col.status && (!filterProj || t.projectId === filterProj));
+      // Use viewData filtered todos (already filtered by global filters)
+      let todos = viewData.todos.filter(t => t.status === col.status);
       
       const cards = todos.map(t => kanbanCard(t)).join('');
       return `<div class="column" data-col="${col.id}">
@@ -1712,9 +1742,9 @@ function renderKanban(){
     if (!kb) return;
     
     kanbanGrid.innerHTML=kb.columns.map(col=>{
-      // Use viewData filtered todos, then apply column and project filters
+      // Use viewData filtered todos (already filtered by global filters)
       const columnTodoIds = new Set(col.todoIds);
-      let todos = viewData.todos.filter(t => columnTodoIds.has(t.id) && (!filterProj || t.projectId === filterProj));
+      let todos = viewData.todos.filter(t => columnTodoIds.has(t.id));
       
       const cards = todos.map(t=>kanbanCard(t)).join('');
       return `<div class="column" data-col="${col.id}">
@@ -1879,7 +1909,18 @@ el('#bCols')?.addEventListener('click',(e)=>{ const kb=store.kanbans[store.curre
 /*** ====== TODO MODAL ====== ***/
 const dlgTodo=el('#dlgTodo');
 const tId=el('#tId'), tTitle=el('#tTitle'), tNotes=el('#tNotes'), tProject=el('#tProject'), tDue=el('#tDue'), tStatus=el('#tStatus'), tDurationValue=el('#tDurationValue'), tDurationUnit=el('#tDurationUnit'), selWaitingOn=el('#selWaitingOn'), selWaitingOnMe=el('#selWaitingOnMe'), eisenForm=el('#eisenForm');
-el('#fabAdd').onclick=()=>openTodoModal();
+
+// Context-aware FAB button
+el('#fabAdd').onclick=()=>{
+  const tab = store.current.tab;
+  if (tab === 'projects') {
+    el('#dlgProject').showModal();
+  } else if (tab === 'people') {
+    openPersonModal();
+  } else {
+    openTodoModal();
+  }
+};
 
 // Close dialogs when clicking on backdrop
 els('dialog').forEach(dialog => {
@@ -1927,7 +1968,7 @@ function openTodoModal(id=null,presetProjectId=null,presetPersonId=null){
   } 
   dlgTodo.showModal(); 
 }
-function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); tProject.innerHTML=opts; el('#aProject').innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); el('#kbProject').innerHTML=`<option value="">All</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
+function refreshProjectSelects(){ const opts=`<option value="">(none)</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); tProject.innerHTML=opts; el('#aProject').innerHTML=`<option value="">All projects</option>`+Object.values(store.projects).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function refreshPeopleSelects(){ const options=Object.values(store.people).map(p=>`<option value="${p.id}">${p.name} (${p.initials})</option>`).join(''); selWaitingOn.innerHTML=options; selWaitingOnMe.innerHTML=options; el('#aPerson').innerHTML=`<option value="">All people</option>`+Object.values(store.people).map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 function setMultiSel(selectEl,set){Array.from(selectEl.options).forEach(o=>o.selected=set.has(o.value));}
 function getMultiSel(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value);} 
@@ -2895,6 +2936,9 @@ function render(full = false) {
     case 'canvas':
       renderCanvas();
       break;
+    case 'ai':
+      renderAi();
+      break;
   }
 }
 
@@ -2923,5 +2967,310 @@ window.addEventListener('storage', (e) => {
     }
   }
 });
+
+/*** ====== AI CHAT ====== ***/
+const AI_LS_KEY = 'jwdm_ai_settings';
+const aiMessages = el('#aiMessages');
+const aiPrompt = el('#aiPrompt');
+const btnAiSend = el('#btnAiSend');
+const btnAiSettings = el('#btnAiSettings');
+const dlgAiSettings = el('#dlgAiSettings');
+const aiDataSizeText = el('#aiDataSizeText');
+
+// Load AI settings
+function loadAiSettings() {
+  try {
+    const raw = localStorage.getItem(AI_LS_KEY);
+    return raw ? JSON.parse(raw) : { apiKey: '', model: 'gpt-4o-mini' };
+  } catch { return { apiKey: '', model: 'gpt-4o-mini' }; }
+}
+
+function saveAiSettings(settings) {
+  localStorage.setItem(AI_LS_KEY, JSON.stringify(settings));
+}
+
+// Build context data for AI
+function buildAiContext() {
+  const today = new Date().toISOString().slice(0, 10);
+  const context = {
+    metadata: { today, todoCount: Object.keys(store.todos).length, projectCount: Object.keys(store.projects).length, peopleCount: Object.keys(store.people).length },
+    todos: Object.values(store.todos).map(t => ({
+      title: t.title,
+      status: t.status,
+      project: store.projects[t.projectId]?.name || null,
+      due: t.due || null,
+      people: (t.people || []).map(pid => store.people[pid]?.name).filter(Boolean),
+      notes: t.notes || null,
+      tags: t.tags || []
+    })),
+    projects: Object.values(store.projects).map(p => ({
+      name: p.name,
+      todoCount: (p.todoIds || []).length
+    })),
+    people: Object.values(store.people).map(p => ({
+      name: p.name,
+      waitingForMe: (p.waitingForMe || []).map(tid => store.todos[tid]?.title).filter(Boolean),
+      waitingForThem: (p.waitingForThem || []).map(tid => store.todos[tid]?.title).filter(Boolean),
+      projects: (p.projects || []).map(pid => store.projects[pid]?.name).filter(Boolean)
+    }))
+  };
+  return context;
+}
+
+// Calculate and display data size
+function updateAiDataSize() {
+  const context = buildAiContext();
+  const json = JSON.stringify(context);
+  const bytes = new Blob([json]).size;
+  const kb = (bytes / 1024).toFixed(1);
+  const tokens = Math.ceil(json.length / 4); // rough estimate: ~4 chars per token
+  aiDataSizeText.textContent = `~${kb} KB / ~${tokens} tokens`;
+}
+
+// Chat history for conversation context
+let chatHistory = [];
+
+// System prompt
+const SYSTEM_PROMPT = `You are a helpful project manager AI assistant. You have access to the user's todos, projects, and team members data. Help them prioritize, summarize, analyze workload, and provide actionable insights.
+
+Be concise but helpful. Use bullet points for lists. When referring to specific items, mention them by name. Provide practical advice.
+
+Today's date is ${new Date().toLocaleDateString()}.`;
+
+// Send message to OpenAI
+async function sendToAi(userMessage) {
+  const settings = loadAiSettings();
+  if (!settings.apiKey) {
+    dlgAiSettings.showModal();
+    return { error: 'Please configure your OpenAI API key first.' };
+  }
+  
+  const context = buildAiContext();
+  const contextMessage = `Here is the current state of the user's work data:\n\n${JSON.stringify(context, null, 2)}`;
+  
+  // Build messages array
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: contextMessage },
+    ...chatHistory,
+    { role: 'user', content: userMessage }
+  ];
+  
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.apiKey}`
+      },
+      body: JSON.stringify({
+        model: settings.model,
+        messages: messages,
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || 'No response received.';
+    
+    // Add to history
+    chatHistory.push({ role: 'user', content: userMessage });
+    chatHistory.push({ role: 'assistant', content: reply });
+    
+    // Keep history manageable (last 10 exchanges)
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    
+    return { content: reply };
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+// Render message bubble
+let messageCounter = 0;
+
+function renderMessage(role, content, isError = false) {
+  const msgId = `ai-msg-${++messageCounter}`;
+  const div = document.createElement('div');
+  div.className = `ai-message ${role}`;
+  div.id = msgId;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'ai-message-avatar';
+  avatar.innerHTML = role === 'assistant' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'ai-message-content';
+  
+  const bubble = document.createElement('div');
+  bubble.className = 'ai-message-bubble';
+  
+  // Add delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'ai-message-delete';
+  deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+  deleteBtn.title = 'Delete message';
+  deleteBtn.onclick = () => {
+    div.remove();
+    // Also remove from history if it exists
+    const idx = chatHistory.findIndex(m => m._id === msgId);
+    if (idx !== -1) chatHistory.splice(idx, 1);
+  };
+  
+  if (isError) {
+    bubble.innerHTML = `<div class="ai-error"><i class="fas fa-exclamation-triangle"></i> ${content}</div>`;
+  } else {
+    // Simple markdown-like formatting
+    let html = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n- /g, '</p><ul><li>')
+      .replace(/\n(\d+)\. /g, '</p><ol><li>');
+    
+    // Clean up list formatting
+    if (html.includes('<ul>')) {
+      html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<li>([^<]*?)(?=<li>|$)/g, '<li>$1</li>');
+      if (!html.includes('</ul>')) html += '</ul>';
+    }
+    
+    bubble.innerHTML = `<p>${html}</p>`;
+  }
+  
+  contentDiv.appendChild(bubble);
+  contentDiv.appendChild(deleteBtn);
+  div.appendChild(avatar);
+  div.appendChild(contentDiv);
+  
+  // Remove welcome message if present
+  const welcome = aiMessages.querySelector('.ai-welcome');
+  if (welcome) welcome.remove();
+  
+  aiMessages.appendChild(div);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+// Show loading indicator
+function showLoading() {
+  const div = document.createElement('div');
+  div.className = 'ai-message assistant';
+  div.id = 'ai-loading';
+  div.innerHTML = `
+    <div class="ai-message-avatar"><i class="fas fa-robot"></i></div>
+    <div class="ai-message-content">
+      <div class="ai-loading"><span></span><span></span><span></span></div>
+    </div>
+  `;
+  aiMessages.appendChild(div);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function hideLoading() {
+  el('#ai-loading')?.remove();
+}
+
+// Handle send
+async function handleAiSend() {
+  const message = aiPrompt.value.trim();
+  if (!message) return;
+  
+  aiPrompt.value = '';
+  aiPrompt.style.height = 'auto';
+  btnAiSend.disabled = true;
+  
+  renderMessage('user', message);
+  showLoading();
+  
+  const result = await sendToAi(message);
+  
+  hideLoading();
+  btnAiSend.disabled = false;
+  
+  if (result.error) {
+    renderMessage('assistant', result.error, true);
+  } else {
+    renderMessage('assistant', result.content);
+  }
+  
+  aiPrompt.focus();
+}
+
+// Event listeners
+btnAiSend?.addEventListener('click', handleAiSend);
+
+aiPrompt?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleAiSend();
+  }
+});
+
+aiPrompt?.addEventListener('input', () => {
+  aiPrompt.style.height = 'auto';
+  aiPrompt.style.height = Math.min(aiPrompt.scrollHeight, 120) + 'px';
+});
+
+btnAiSettings?.addEventListener('click', () => {
+  const settings = loadAiSettings();
+  el('#aiApiKey').value = settings.apiKey || '';
+  el('#aiModel').value = settings.model || 'gpt-4o-mini';
+  dlgAiSettings.showModal();
+});
+
+dlgAiSettings?.addEventListener('close', () => {
+  if (dlgAiSettings.returnValue === 'default') {
+    const settings = {
+      apiKey: el('#aiApiKey').value.trim(),
+      model: el('#aiModel').value
+    };
+    saveAiSettings(settings);
+  }
+});
+
+// Clear entire chat
+el('#btnAiClearChat')?.addEventListener('click', () => {
+  if (confirm('Clear entire chat history?')) {
+    chatHistory = [];
+    messageCounter = 0;
+    aiMessages.innerHTML = `<div class="ai-welcome">
+      <div class="ai-welcome-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+      <h3>AI Project Assistant</h3>
+      <p>Ask me about your todos, projects, or people. I can help you prioritize, summarize, or analyze your work.</p>
+      <div class="ai-suggestions">
+        <button class="ai-suggestion" data-prompt="What are my most urgent tasks?">Most urgent tasks</button>
+        <button class="ai-suggestion" data-prompt="Summarize my projects and their status">Project summary</button>
+        <button class="ai-suggestion" data-prompt="Who has the most work on their plate?">Workload analysis</button>
+        <button class="ai-suggestion" data-prompt="What tasks are overdue or due soon?">Overdue tasks</button>
+      </div>
+    </div>`;
+    // Re-attach suggestion button listeners
+    els('.ai-suggestion')?.forEach(btn => {
+      btn.addEventListener('click', () => {
+        aiPrompt.value = btn.dataset.prompt;
+        handleAiSend();
+      });
+    });
+  }
+});
+
+// Suggestion buttons
+els('.ai-suggestion')?.forEach(btn => {
+  btn.addEventListener('click', () => {
+    aiPrompt.value = btn.dataset.prompt;
+    handleAiSend();
+  });
+});
+
+// Update data size when switching to AI tab
+function renderAi() {
+  updateAiDataSize();
+}
 
 render(true);
